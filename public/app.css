@@ -1,0 +1,167 @@
+/* Asset Studio shell. Palette is driven by studio.config.json → --accent is set
+   at runtime from the manifest, so forks only edit the config. */
+:root {
+  --accent: #2453FF;
+  --accent-soft: #5C7CFF;
+  --bg: #0B0C0F;
+  --panel: #121419;
+  --panel-2: #171A21;
+  --line: #232733;
+  --text: #EEF0F4;
+  --mut: #8A91A0;
+  --radius: 14px;
+  --sidebar: 268px;
+}
+:root[data-theme="light"] {
+  --bg: #F6F7F9; --panel: #FFFFFF; --panel-2: #FFFFFF;
+  --line: #E3E6EC; --text: #16181D; --mut: #6B7280;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 20px; }
+
+/* ---------- layout ---------- */
+.shell { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
+.side {
+  background: var(--panel); border-right: 1px solid var(--line);
+  padding: 22px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.main { padding: 30px 34px 60px; min-width: 0; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; }
+}
+
+/* ---------- sidebar ---------- */
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 18px; }
+.brand .mark {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--accent);
+  display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 17px;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.brand .name { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+.workspace {
+  display: flex; align-items: center; gap: 11px; padding: 11px 12px; margin-bottom: 20px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+}
+:root[data-theme="light"] .workspace { background: var(--bg); }
+.workspace .dot { width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-soft)); }
+.workspace .meta { min-width: 0; }
+.workspace .t { font-weight: 700; font-size: 13.5px; }
+.workspace .s { font-size: 11.5px; color: var(--mut); }
+
+.navgroup { margin-bottom: 6px; }
+.navgroup > .head {
+  width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 10px;
+  background: none; border: 0; color: var(--mut); cursor: pointer; border-radius: 9px;
+  font: 700 11px/1 Inter, sans-serif; letter-spacing: 0.13em; text-transform: uppercase;
+}
+.navgroup > .head:hover { color: var(--text); }
+.navgroup > .head .chev { margin-left: auto; transition: transform .18s; font-size: 10px; }
+.navgroup.closed > .head .chev { transform: rotate(-90deg); }
+.navgroup.closed > .items { display: none; }
+.items { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; }
+.navitem {
+  display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px;
+  color: var(--mut); font-size: 13.5px; font-weight: 600; cursor: pointer;
+  background: none; border: 0; width: 100%; text-align: left;
+}
+.navitem:hover { background: var(--panel-2); color: var(--text); }
+:root[data-theme="light"] .navitem:hover { background: var(--bg); }
+.navitem.on { background: var(--accent); color: #fff; }
+.navitem .count { margin-left: auto; font-size: 11px; opacity: .7; font-weight: 700; }
+.navitem .ic { width: 16px; display: grid; place-items: center; opacity: .9; }
+
+/* Theme switch — a two-state segmented pill that lives in the page header. */
+.themeswitch {
+  display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.themeswitch button {
+  display: grid; place-items: center; width: 34px; height: 28px; border: 0; cursor: pointer;
+  border-radius: 999px; background: none; color: var(--mut); font-size: 13px; line-height: 1;
+}
+.themeswitch button:hover { color: var(--text); }
+.themeswitch button.on { background: var(--accent); color: #fff; }
+
+/* ---------- header + stats ---------- */
+.h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.sub { color: var(--mut); font-size: 13.5px; margin-top: 5px; }
+.headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--mut);
+  font-size: 12.5px; font-weight: 700;
+}
+.section-t { font-size: 17px; font-weight: 800; margin: 30px 0 14px; letter-spacing: -0.01em; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.stat {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px;
+}
+.stat .k { display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; color: var(--mut); font-weight: 600; }
+.stat .v { font-size: 32px; font-weight: 800; color: var(--accent); margin-top: 8px; letter-spacing: -0.02em; }
+.stat .n { font-size: 11.5px; color: var(--mut); margin-top: 3px; }
+
+/* ---------- template grid ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 18px; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: transform .16s ease, border-color .16s ease;
+}
+.card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.thumb {
+  position: relative; aspect-ratio: 4/5; background: var(--panel-2);
+  border-bottom: 1px solid var(--line); overflow: hidden;
+}
+:root[data-theme="light"] .thumb { background: #EEF0F4; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .skel { position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--mut); font-size: 11.5px; font-weight: 600; }
+.card .body { padding: 14px 15px 15px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.card .nm { font-weight: 700; font-size: 14.5px; letter-spacing: -0.01em; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent);
+  padding: 4px 8px; border-radius: 6px; }
+.tag.plain { color: var(--mut); background: var(--panel-2); }
+:root[data-theme="light"] .tag.plain { background: var(--bg); }
+.sizes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.szbtn {
+  font-size: 11.5px; font-weight: 700; padding: 6px 10px; border-radius: 7px;
+  border: 1px solid var(--line); color: var(--mut); background: none;
+}
+.szbtn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* First-run nudge, shown until studio.config.json is personalised. */
+.welcome {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-radius: var(--radius); padding: 16px 20px; margin: 22px 0 4px;
+}
+.welcome .t { font-weight: 800; font-size: 14.5px; }
+.welcome .d { font-size: 13px; color: var(--mut); margin-top: 3px; }
+.welcome code {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: 3px 9px; font-size: 12.5px; font-weight: 700; color: var(--accent);
+}
+.welcome .x { margin-left: auto; background: none; border: 0; color: var(--mut);
+  font-size: 18px; cursor: pointer; line-height: 1; }
+.welcome .x:hover { color: var(--text); }
+
+.empty {
+  border: 1px dashed var(--line); border-radius: var(--radius); padding: 46px 30px;
+  text-align: center; color: var(--mut); font-size: 13.5px; line-height: 1.7;
+}
+.empty code { background: var(--panel); padding: 2px 7px; border-radius: 5px; color: var(--text); font-size: 12.5px; }

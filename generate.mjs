@@ -1,0 +1,102 @@
+// Build step. Walks templates/<media>/<category>/<name>.html, stamps one project
+// per output size into build/, and writes build/manifest.json.
+//
+// The manifest is the contract with the server: it parses HTML exactly once here,
+// at build time, so the dashboard never pays that cost per request.
+//
+//   node generate.mjs
+import {
+  readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, cpSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const CONFIG = JSON.parse(readFileSync(path.join(ROOT, "studio.config.json"), "utf8"));
+const TPL_ROOT = path.join(ROOT, "templates");
+const BUILD = path.join(ROOT, "build");
+
+const dirs = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []);
+const htmls = (p) => (existsSync(p) ? readdirSync(p).filter((f) => f.endsWith(".html")) : []);
+const title = (s) => s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+/** Pull the declared variable manifest + composition metadata out of a template. */
+function parseTemplate(html) {
+  let variables = [];
+  const v = html.match(/data-composition-variables='([\s\S]*?)'/);
+  if (v) { try { variables = JSON.parse(v[1]); } catch { /* malformed: treat as none */ } }
+  const dur = html.match(/data-duration="([\d.]+)"/);
+  return { variables, duration: dur ? Number(dur[1]) : 0 };
+}
+
+/** Replace {{TOKENS}} for one size and tag <html> so CSS can target the ratio. */
+function stamp(html, size) {
+  let out = html
+    .replaceAll("{{WIDTH}}", String(size.w))
+    .replaceAll("{{HEIGHT}}", String(size.h))
+    .replaceAll("{{LABEL}}", size.label);
+  const unresolved = [...out.matchAll(/{{([A-Z][A-Z0-9_]*)}}/g)].map((m) => m[1]);
+  if (unresolved.length) throw new Error(`unresolved token(s): ${[...new Set(unresolved)].join(", ")}`);
+  return out.replace(/<html(\s|>)/, `<html data-size="${size.suffix}" data-ratio="${size.w}x${size.h}"$1`);
+}
+
+if (existsSync(BUILD)) rmSync(BUILD, { recursive: true, force: true });
+mkdirSync(BUILD, { recursive: true });
+
+const manifest = [];
+let count = 0;
+
+for (const media of CONFIG.media) {
+  const mediaDir = path.join(TPL_ROOT, media.dir);
+  const sizes = CONFIG.sizes[media.kind];
+  if (!sizes) throw new Error(`studio.config.json: no sizes defined for kind "${media.kind}"`);
+
+  // Categories are subfolders. Files sitting directly in the media folder land in "general".
+  const categories = [...dirs(mediaDir).map((c) => ({ id: c, dir: path.join(mediaDir, c) }))];
+  if (htmls(mediaDir).length) categories.unshift({ id: "general", dir: mediaDir });
+
+  for (const cat of categories) {
+    for (const file of htmls(cat.dir)) {
+      const name = file.replace(/\.html$/, "");
+      const src = readFileSync(path.join(cat.dir, file), "utf8");
+      const { variables, duration } = parseTemplate(src);
+      // Content hash keys the thumbnail cache: edit a template, thumb regenerates.
+      const hash = createHash("sha1").update(src).digest("hex").slice(0, 12);
+
+      const built = sizes.map((size) => {
+        const dir = path.posix.join("build", media.id, cat.id, `${name}-${size.suffix}`);
+        const abs = path.join(ROOT, dir);
+        mkdirSync(abs, { recursive: true });
+        writeFileSync(path.join(abs, "index.html"), stamp(src, size));
+        const assets = path.join(cat.dir, "assets");
+        if (existsSync(assets)) cpSync(assets, path.join(abs, "assets"), { recursive: true });
+        const shared = path.join(TPL_ROOT, "_shared");
+        if (existsSync(shared)) cpSync(shared, path.join(abs, "assets"), { recursive: true, force: false });
+        return { ...size, dir };
+      });
+
+      manifest.push({
+        id: `${media.id}/${cat.id}/${name}`,
+        media: media.id, mediaLabel: media.label, kind: media.kind,
+        category: cat.id, categoryLabel: title(cat.id),
+        name, label: title(name), hash, duration, variables, sizes: built,
+      });
+      count++;
+    }
+  }
+}
+
+writeFileSync(path.join(BUILD, "manifest.json"), JSON.stringify({
+  brand: CONFIG.brand, media: CONFIG.media, render: CONFIG.render,
+  builtAt: new Date().toISOString(), templates: manifest,
+}, null, 2));
+
+console.log(`\n  Built ${count} template${count === 1 ? "" : "s"} → build/`);
+for (const m of CONFIG.media) {
+  const n = manifest.filter((t) => t.media === m.id).length;
+  const cats = [...new Set(manifest.filter((t) => t.media === m.id).map((t) => t.categoryLabel))];
+  console.log(`   ${m.label.padEnd(10)} ${String(n).padStart(3)} template(s)  ${cats.join(", ") || "—"}`);
+}
+if (!count) console.log("   (no templates yet — add one under templates/<media>/<category>/)");
+console.log("");

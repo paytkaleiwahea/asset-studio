@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+  STARTER TEMPLATE — video / overlays
+  Motion templates follow the HyperFrames contract:
+    · one gsap.timeline({paused:true}) registered on window.__timelines[compositionId]
+    · seek-safe: animate transforms/opacity only, never Math.random()/Date.now()
+    · data-duration on #root sets the render length
+  Set bgColor to "transparent" (the transparent MOV export does this for you) to
+  render an overlay that floats over footage.
+-->
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"line1","type":"string","label":"Line 1","default":"Your headline"},
+    {"id":"line2","type":"string","label":"Line 2 (blank hides)","default":"lands right here"},
+    {"id":"caption","type":"string","label":"Caption (blank hides)","default":"Supporting line"},
+    {"id":"bgColor","type":"color","label":"Background","default":"#F6F7F9"},
+    {"id":"textColor","type":"color","label":"Text","default":"#16181D"},
+    {"id":"accentColor","type":"color","label":"Accent","default":"#2453FF"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width={{WIDTH}}, height={{HEIGHT}}" />
+    <title>Starter Headline {{LABEL}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Lora:wght@600&display=swap" rel="stylesheet" />
+    <style>
+      body { margin: 0; }
+      :root { --serif: "Lora", Georgia, serif; --sans: "Inter", Arial, sans-serif; }
+      #root {
+        position: relative; width: {{WIDTH}}px; height: {{HEIGHT}}px; overflow: hidden;
+        background: var(--bgColor); color: var(--textColor); font-family: var(--sans);
+      }
+      /* gridOpacity is set to 0 by the transparent export so the grid drops out. */
+      #root::before {
+        content: ""; position: absolute; inset: 0; opacity: var(--gridOpacity, 1);
+        background-image: linear-gradient(rgba(22,24,29,0.05) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(22,24,29,0.05) 1px, transparent 1px);
+        background-size: 54px 54px;
+      }
+      .stage { position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 26px; padding: 80px; box-sizing: border-box; }
+      .line { font-family: var(--serif); font-weight: 600; font-size: 96px; line-height: 1.06;
+        letter-spacing: -0.02em; text-align: center; }
+      .rule { width: 120px; height: 10px; border-radius: 5px; background: var(--accentColor); }
+      .caption { font-weight: 700; font-size: 40px; text-align: center;
+        color: color-mix(in srgb, var(--textColor) 70%, transparent); }
+      html[data-size="half"] .line { font-size: 72px; }
+      html[data-size="wide"] .line { font-size: 88px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="starter-headline"
+         data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="4">
+      <section class="stage clip" data-start="0" data-duration="4" data-track-index="1">
+        <div class="line" id="l1" data-var-text="line1">Your headline</div>
+        <div class="rule" id="rule"></div>
+        <div class="line" id="l2" data-var-text="line2">lands right here</div>
+        <div class="caption" id="cap" data-var-text="caption">Supporting line</div>
+      </section>
+    </div>
+    <script>
+      const vars = window.__studio?.getVariables?.() ?? {};
+      for (const [id, key] of [["l2", "line2"], ["cap", "caption"]])
+        if (String(vars[key] ?? "").trim() === "") document.getElementById(id).remove();
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.from("#l1", { y: 50, opacity: 0, duration: 0.55, ease: "power3.out" }, 0.15)
+        .from("#rule", { scaleX: 0, transformOrigin: "50% 50%", duration: 0.45, ease: "power3.out" }, 0.5);
+      if (document.getElementById("l2"))
+        tl.from("#l2", { y: 50, opacity: 0, duration: 0.55, ease: "power3.out" }, 0.7);
+      if (document.getElementById("cap"))
+        tl.from("#cap", { y: 26, opacity: 0, duration: 0.5, ease: "power3.out" }, 1.05);
+      window.__timelines["starter-headline"] = tl;
+    </script>
+  </body>
+</html>

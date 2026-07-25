@@ -1,0 +1,110 @@
+# Onboarding
+
+Two ways to set up your fork. Both end with a working, branded studio.
+
+---
+
+## Option A — the wizard (2 minutes)
+
+```bash
+npm install
+npm run setup
+```
+
+It asks a handful of questions (name, handle, accent color, what you make, your categories),
+then writes `studio.config.json`, creates your category folders, and drops a working template
+into each so there's something on screen immediately.
+
+```bash
+npm start
+```
+
+---
+
+## Option B — let an LLM do it
+
+Better if you want it to *think* about your brand and category structure rather than you
+guessing. Paste the prompt below into Claude, GPT, or Hermes. Answer its questions. It gives
+you a JSON block. Then:
+
+```bash
+npm run setup -- --paste
+```
+
+Paste the JSON, type `END` on its own line, hit Enter.
+
+### The prompt
+
+> You are setting up my fork of **Asset Studio**, a local tool that turns HTML templates into
+> branded social assets (PNG images and video overlays).
+>
+> **Interview me first.** Ask me, a few at a time, about:
+> - what my brand/business is and who it's for
+> - my brand name and the handle that should appear on assets
+> - my colors (get a specific accent hex; if I only describe it, propose one)
+> - what content I actually post — carousels? single images? short video?
+> - the recurring *kinds* of posts I make (these become categories)
+>
+> Push back if my categories overlap or are too vague. I want 2–5 categories per media type,
+> named as **lowercase-hyphenated** slugs describing the *job* of the asset (e.g. `proof`,
+> `hot-takes`, `case-studies`) — not the visual style.
+>
+> When you have enough, output **only** a JSON block in exactly this shape:
+>
+> ```json
+> {
+>   "brand": {
+>     "name": "My Studio",
+>     "handle": "@myhandle",
+>     "accent": "#2453FF",
+>     "accentSoft": "#5C7CFF"
+>   },
+>   "media": [
+>     { "id": "carousels", "label": "Carousels", "icon": "layers", "dir": "carousels",
+>       "kind": "still", "blurb": "Multi-slide decks.",
+>       "categories": ["slides", "covers"] },
+>     { "id": "statics", "label": "Statics", "icon": "image", "dir": "statics",
+>       "kind": "still", "blurb": "Single-frame posters.",
+>       "categories": ["posters", "proof"] },
+>     { "id": "video", "label": "Video", "icon": "play", "dir": "video",
+>       "kind": "motion", "blurb": "Animated overlays.",
+>       "categories": ["overlays"] }
+>   ]
+> }
+> ```
+>
+> Rules:
+> - `kind` is `"still"` (exports PNG) or `"motion"` (exports video). Only use `motion` if I said I make video.
+> - `icon` is one of: `layers`, `image`, `play`.
+> - `dir` must equal `id`.
+> - Drop any media type I don't actually use.
+> - `accent` must be a `#RRGGBB` hex with enough contrast to sit behind white text.
+> - Output the JSON and nothing else — no commentary after it.
+
+### Then keep going
+
+The same assistant can write your templates. Paste it **TEMPLATE-GUIDE.md** and ask for a
+template for one of your categories. Save the result to
+`templates/<media>/<category>/<name>.html`, run `npm run build`, refresh.
+
+That loop — *describe an asset → get a template → it lives in your library forever* — is the
+whole point of this thing.
+
+---
+
+## What setup actually changes
+
+| File | What happens |
+|---|---|
+| `studio.config.json` | Rewritten with your brand + media types |
+| `templates/<media>/<category>/` | Folders created for every category you named |
+| `templates/.../<name>.html` | A working starter copied into each new category |
+
+Nothing else is touched. Re-run `npm run setup` any time to change your mind — it only adds
+folders, it never deletes your templates.
+
+## Changing things later
+
+- **Rebrand**: edit `brand` in `studio.config.json`, then `npm run build`.
+- **New category**: just make the folder. It appears in the nav on the next build.
+- **New output size**: add to `sizes.still` or `sizes.motion` in the config.

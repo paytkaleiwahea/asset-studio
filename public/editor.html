@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Editor — Asset Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/app.css" />
+<script src="/theme.js"></script>
+<style>
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 30px 70px; }
+  .back { color: var(--mut); font-size: 13px; font-weight: 600; }
+  .back:hover { color: var(--text); }
+  .cols { display: grid; grid-template-columns: minmax(280px, 400px) 1fr; gap: 30px; align-items: start; margin-top: 18px; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+  .stagewrap { position: sticky; top: 22px; }
+  .frame {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--line); background: var(--panel); box-shadow: 0 20px 50px rgba(0,0,0,.35);
+  }
+  .frame iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; }
+  .frame.drag { outline: 3px dashed var(--accent); outline-offset: -3px; }
+  .drop { position: absolute; inset: 0; display: none; place-items: center; z-index: 3;
+    background: color-mix(in srgb, var(--bg) 78%, transparent); font-weight: 700; font-size: 14px; }
+  .frame.drag .drop { display: grid; }
+  .meta { color: var(--mut); font-size: 12px; margin-top: 10px; text-align: center; }
+  .btn { width: 100%; padding: 13px; border: 0; border-radius: 10px; background: var(--accent);
+    color: #fff; font: 800 14px Inter, sans-serif; cursor: pointer; margin-top: 12px; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+  .err { color: #ff7b72; font-size: 12.5px; margin-top: 10px; white-space: pre-wrap; }
+  .panel { display: flex; flex-direction: column; gap: 15px; }
+  .field label { display: block; font: 700 10.5px Inter, sans-serif; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--mut); margin-bottom: 6px; }
+  input[type=text], textarea, select {
+    width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
+    color: var(--text); padding: 10px 12px; font: 400 13.5px Inter, sans-serif; }
+  textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
+  input[type=color] { width: 46px; height: 34px; padding: 2px; background: none;
+    border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  .colors { display: flex; gap: 14px; flex-wrap: wrap; }
+  .colors .c { text-align: center; }
+  .colors .c label { font-size: 9.5px; letter-spacing: .06em; }
+  .row { display: flex; gap: 9px; align-items: center; }
+  .szrow { display: flex; gap: 7px; flex-wrap: wrap; }
+  .sz { font-size: 12px; font-weight: 700; padding: 7px 11px; border-radius: 8px;
+    border: 1px solid var(--line); color: var(--mut); }
+  .sz.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .upl { display: inline-flex; align-items: center; gap: 8px; font: 700 12.5px Inter, sans-serif;
+    border: 1px dashed var(--line); border-radius: 9px; padding: 9px 13px; cursor: pointer; color: var(--mut); }
+  .upl:hover { color: var(--text); border-color: var(--text); }
+  .setimg { font-size: 11.5px; color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="headrow">
+    <div>
+      <a class="back" href="/">← Library</a>
+      <h1 class="h1" id="title" style="margin-top:8px">Loading…</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div id="themeSwitch"></div>
+  </div>
+
+  <div class="cols">
+    <div class="stagewrap">
+      <div class="frame" id="frame">
+        <iframe id="pv" sandbox="allow-scripts"></iframe>
+        <div class="drop">Drop image to place</div>
+      </div>
+      <div class="meta" id="meta"></div>
+      <button class="btn" id="png">Download PNG</button>
+      <button class="btn ghost" id="mp4" hidden>Download video (MP4)</button>
+      <button class="btn ghost" id="mov" hidden>Download transparent (MOV)</button>
+      <div class="err" id="err"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script>
+const qs = new URLSearchParams(location.search);
+const ID = qs.get("t"); let SUFFIX = qs.get("s");
+const $ = (i) => document.getElementById(i);
+let TPL = null, SIZE = null, values = {}, timer = null;
+mountThemeSwitch("themeSwitch");
+
+const pv = $("pv"), frame = $("frame");
+function fit() {
+  if (!SIZE) return;
+  const s = frame.clientWidth / SIZE.w;
+  pv.style.width = SIZE.w + "px"; pv.style.height = SIZE.h + "px";
+  pv.style.transform = `scale(${s})`;
+  frame.style.height = SIZE.h * s + "px";
+}
+addEventListener("resize", fit);
+
+function refresh() {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    pv.src = `/preview/${ID}/${SUFFIX}?vars=` + encodeURIComponent(JSON.stringify(values));
+  }, 280);
+}
+
+const imageVars = () => TPL.variables.filter((v) => v.type === "string" && /image|img|photo|logo|shot/i.test(v.id));
+
+async function uploadTo(varId, file, tag) {
+  try {
+    if (!file || !/^image\//.test(file.type)) throw new Error("Drop a PNG, JPEG, WebP, GIF or SVG");
+    const fd = new FormData(); fd.append("file", file);
+    const r = await fetch(`/api/upload/${ID}`, { method: "POST", body: fd });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || "Upload failed");
+    values[varId] = j.path;
+    if (tag) tag.textContent = "✓ image set";
+    refresh();
+  } catch (e) { $("err").textContent = e.message; }
+}
+
+function buildPanel() {
+  const p = $("panel"); p.innerHTML = "";
+
+  if (TPL.sizes.length > 1) {
+    const d = document.createElement("div"); d.className = "field";
+    d.innerHTML = `<label>Size</label><div class="szrow">${TPL.sizes.map((s) =>
+      `<a class="sz ${s.suffix === SUFFIX ? "on" : ""}" href="/editor.html?t=${encodeURIComponent(ID)}&s=${s.suffix}">${s.label}</a>`).join("")}</div>`;
+    p.appendChild(d);
+  }
+
+  const colors = TPL.variables.filter((v) => v.type === "color");
+  for (const v of TPL.variables.filter((v) => v.type !== "color")) {
+    const d = document.createElement("div"); d.className = "field";
+    const lab = document.createElement("label"); lab.textContent = v.label || v.id; d.appendChild(lab);
+
+    let input;
+    if (v.type === "enum") {
+      input = document.createElement("select");
+      for (const o of v.options || []) {
+        const op = document.createElement("option"); op.value = o.value; op.textContent = o.label; input.appendChild(op);
+      }
+    } else if (/\n/.test(String(v.default ?? "")) || String(v.default ?? "").length > 46) {
+      input = document.createElement("textarea");
+    } else {
+      input = document.createElement("input"); input.type = "text";
+    }
+    input.value = values[v.id] ?? "";
+    input.oninput = () => { values[v.id] = input.value; refresh(); };
+    d.appendChild(input);
+
+    if (v.type === "string" && /image|img|photo|logo|shot/i.test(v.id)) {
+      const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "8px";
+      const tag = document.createElement("span"); tag.className = "setimg";
+      tag.textContent = values[v.id] && !/placeholder/.test(values[v.id]) ? "✓ image set" : "";
+      const up = document.createElement("label"); up.className = "upl";
+      up.innerHTML = `Upload image<input type="file" accept="image/*" hidden>`;
+      up.querySelector("input").onchange = (e) => {
+        const f = e.target.files[0]; if (f) uploadTo(v.id, f, tag);
+      };
+      row.append(up, tag); d.appendChild(row);
+    }
+    p.appendChild(d);
+  }
+
+  if (colors.length) {
+    const d = document.createElement("div"); d.className = "field";
+    d.innerHTML = `<label>Colors</label>`;
+    const row = document.createElement("div"); row.className = "colors";
+    for (const v of colors) {
+      const c = document.createElement("div"); c.className = "c";
+      const l = document.createElement("label"); l.textContent = v.label || v.id;
+      const i = document.createElement("input"); i.type = "color"; i.value = values[v.id] || "#000000";
+      i.oninput = () => { values[v.id] = i.value; refresh(); };
+      c.append(l, i); row.appendChild(c);
+    }
+    d.appendChild(row); p.appendChild(d);
+  }
+}
+
+async function exportAs(btnId, label, endpoint, extra) {
+  const b = $(btnId); const e = $("err");
+  b.disabled = true; b.textContent = "Rendering…"; e.textContent = "";
+  try {
+    const r = await fetch(endpoint, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: values, ...extra }),
+    });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || "Export failed");
+    const a = document.createElement("a"); a.href = j.url; a.download = "";
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (err) { e.textContent = err.message; }
+  b.disabled = false; b.textContent = label;
+}
+$("png").onclick = () => exportAs("png", "Download PNG", "/api/export/png", {});
+$("mp4").onclick = () => exportAs("mp4", "Download video (MP4)", "/api/export/video", { transparent: false });
+$("mov").onclick = () => exportAs("mov", "Download transparent (MOV)", "/api/export/video", { transparent: true });
+
+// drag an image anywhere onto the preview → first image slot
+let depth = 0;
+frame.addEventListener("dragenter", (e) => { if (imageVars().length) { e.preventDefault(); depth++; frame.classList.add("drag"); } });
+frame.addEventListener("dragover", (e) => { if (imageVars().length) e.preventDefault(); });
+frame.addEventListener("dragleave", () => { if (--depth <= 0) { depth = 0; frame.classList.remove("drag"); } });
+frame.addEventListener("drop", (e) => {
+  e.preventDefault(); depth = 0; frame.classList.remove("drag");
+  const v = imageVars()[0]; if (!v) return;
+  const f = e.dataTransfer.files[0];
+  if (f) uploadTo(v.id, f, null).then(buildPanel);
+});
+
+fetch("/api/manifest").then((r) => r.json()).then((data) => {
+  document.documentElement.style.setProperty("--accent", data.brand.accent);
+  document.documentElement.style.setProperty("--accent-soft", data.brand.accentSoft);
+  TPL = data.templates.find((t) => t.id === ID);
+  if (!TPL) { $("title").textContent = "Template not found"; return; }
+  SUFFIX = SUFFIX && TPL.sizes.some((s) => s.suffix === SUFFIX) ? SUFFIX : TPL.sizes[0].suffix;
+  SIZE = TPL.sizes.find((s) => s.suffix === SUFFIX);
+  values = Object.fromEntries(TPL.variables.map((v) => [v.id, v.default]));
+  $("title").textContent = TPL.label;
+  $("sub").textContent = `${TPL.mediaLabel} · ${TPL.categoryLabel}`;
+  $("meta").textContent = `${SIZE.w}×${SIZE.h} · exports at ${data.render.scale}×`;
+  if (TPL.kind === "motion") { $("mp4").hidden = false; $("mov").hidden = false; $("png").textContent = "Download still (PNG)"; }
+  buildPanel(); fit(); refresh();
+}).catch((e) => { $("err").textContent = e.message; });
+</script>
+</body>
+</html>
