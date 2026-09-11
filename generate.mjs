@@ -6,10 +6,10 @@
 //
 //   node generate.mjs
 import {
-  readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, cpSync,
+  readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, cpSync, renameSync,
 } from "node:fs";
 import { brandTemplate } from "./brand.mjs";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,13 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG = JSON.parse(readFileSync(path.join(ROOT, "studio.config.json"), "utf8"));
 const TPL_ROOT = path.join(ROOT, "templates");
 const BUILD = path.join(ROOT, "build");
+const STAGE = path.join(ROOT, `.build-stage-${randomUUID()}`);
+const PREVIOUS = path.join(ROOT, `.build-previous-${randomUUID()}`);
+function removeTemporaryBuild(directory) {
+  const resolved = path.resolve(directory);
+  if (path.dirname(resolved) !== ROOT || !/^\.build-(stage|previous)-[a-f0-9-]+$/.test(path.basename(resolved))) throw new Error('Refusing to remove a path outside this build workspace');
+  rmSync(resolved, { recursive: true, force: true });
+}
 
 const dirs = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []);
 const htmls = (p) => (existsSync(p) ? readdirSync(p).filter((f) => f.endsWith(".html")) : []);
@@ -64,8 +71,9 @@ if (existsSync(oldManifest)) {
     }
   }
 }
-if (existsSync(BUILD)) rmSync(BUILD, { recursive: true, force: true });
-mkdirSync(BUILD, { recursive: true });
+mkdirSync(STAGE, { recursive: true });
+
+try {
 
 const manifest = [];
 let count = 0;
@@ -94,7 +102,7 @@ for (const media of CONFIG.media) {
 
       const built = sizes.map((size) => {
         const dir = path.posix.join("build", media.id, cat.id, `${name}-${size.suffix}`);
-        const abs = path.join(ROOT, dir);
+        const abs = path.join(STAGE, path.posix.relative('build', dir));
         mkdirSync(abs, { recursive: true });
         writeFileSync(path.join(abs, "index.html"), stamp(src, size));
         const assets = path.join(cat.dir, "assets");
@@ -117,10 +125,22 @@ for (const media of CONFIG.media) {
   }
 }
 
-writeFileSync(path.join(BUILD, "manifest.json"), JSON.stringify({
+writeFileSync(path.join(STAGE, "manifest.json"), JSON.stringify({
   brand: CONFIG.brand, media: CONFIG.media, render: CONFIG.render,
   builtAt: new Date().toISOString(), templates: manifest,
 }, null, 2));
+
+// Publish only a complete build. Restore the old directory if promotion fails.
+if (existsSync(BUILD)) renameSync(BUILD, PREVIOUS);
+try { renameSync(STAGE, BUILD); }
+catch (e) {
+  if (existsSync(PREVIOUS)) renameSync(PREVIOUS, BUILD);
+  throw e;
+}
+if (existsSync(PREVIOUS)) {
+  try { removeTemporaryBuild(PREVIOUS); }
+  catch { console.warn(`Previous build cleanup deferred: ${PREVIOUS}`); }
+}
 
 console.log(`\n  Built ${count} template${count === 1 ? "" : "s"} → build/`);
 for (const m of CONFIG.media) {
@@ -130,3 +150,6 @@ for (const m of CONFIG.media) {
 }
 if (!count) console.log("   (no templates yet — add one under templates/<media>/<category>/)");
 console.log("");
+} finally {
+  if (existsSync(STAGE)) removeTemporaryBuild(STAGE);
+}

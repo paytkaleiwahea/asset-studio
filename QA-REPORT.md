@@ -1,5 +1,19 @@
 # Asset Studio regression QA
 
+## Pre-push QA of Brand Settings
+
+Found and fixed a failed-save recovery bug: a malformed template previously left
+build/ unavailable even after the brand config was restored. Generation now
+stages a complete build before replacing the working directory, restores the old
+directory if promotion fails, and cleans temporary build directories.
+
+Verified malformed-template brand save returns an error while preserving the
+exact prior manifest and brand; the library API still returns HTTP 200. Added
+`node tests/build-regression.mjs` for failed build preservation and recovery.
+Re-tested first-run Skip, dismissal after reload, reopening Brand Settings,
+full brand save, saved values after reload, and invalid-color rejection.
+Verified uploaded backgrounds survive a brand-save rebuild in every output size.
+
 ## Brand setup QA
 
 - Browser-tested the first-run invitation, Skip for now, permanent Brand Settings
@@ -84,8 +98,8 @@ account usage limit. Size-switch draft persistence was reviewed in existing code
 but was not interactively re-tested in this round. Docker itself and IPv6 binding
 were not tested; the wildcard IPv4 binding was tested locally.
 
-Malformed templates now fail loudly, but the build still regenerates build/
-in place. Fix the reported template and rebuild before using the studio again.
+Malformed templates fail loudly while preserving the last successful build.
+Fix the reported template and rebuild to publish the new changes.
 
 ## Repeat setup check
 
