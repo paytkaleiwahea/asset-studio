@@ -27,6 +27,9 @@ Same input → same output, every time.
 
 ## Quick start
 
+Requires Node.js 22 or newer. PNG export uses Chrome; video export also requires
+HyperFrames, FFmpeg, and FFprobe.
+
 ```bash
 npm install
 npm run setup      # name it, pick your color, create your categories
@@ -51,6 +54,35 @@ CHROME_PATH="/path/to/chrome" npm start
 
 **Video export** is optional and needs `hyperframes` + `ffmpeg` installed. PNG export
 (statics + carousels) needs neither beyond Chrome.
+
+### Video export setup
+
+`npm install` installs the optional HyperFrames package. FFmpeg and FFprobe are native
+programs, so they should not be committed to this repository. Install the official or
+package-manager build for your operating system, then restart the studio:
+
+```powershell
+# Windows (Windows Package Manager)
+winget install --id Gyan.FFmpeg -e
+```
+
+```bash
+# macOS
+brew install ffmpeg
+
+# Ubuntu / Debian
+sudo apt update && sudo apt install -y ffmpeg
+```
+
+Verify the complete local setup with:
+
+```bash
+npm run doctor
+```
+
+HyperFrames is the renderer used by this studio's HTML video templates. Remotion is not
+required. Add Remotion only in a separate React-based template workflow; installing it here
+would add a second rendering system without improving these templates.
 
 ---
 

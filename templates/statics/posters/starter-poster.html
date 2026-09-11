@@ -11,6 +11,16 @@
     {"id":"headline","type":"string","label":"Headline","default":"A headline that earns the scroll"},
     {"id":"caption","type":"string","label":"Caption (blank hides)","default":"One supporting line underneath."},
     {"id":"handle","type":"string","label":"Handle (blank hides)","default":"@yourhandle"},
+    {"id":"backgroundImage","type":"string","label":"Background image or gradient (optional)","default":""},
+    {"id":"backgroundFit","type":"enum","label":"Background fit","default":"cover","options":[
+      {"value":"cover","label":"Cover"},{"value":"contain","label":"Contain"},{"value":"fill","label":"Stretch"}
+    ]},
+    {"id":"backgroundPosition","type":"enum","label":"Background position","default":"center","options":[
+      {"value":"center","label":"Center"},{"value":"top","label":"Top"},{"value":"bottom","label":"Bottom"}
+    ]},
+    {"id":"backgroundTreatment","type":"enum","label":"Readability wash","default":"none","options":[
+      {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
+    ]},
     {"id":"theme","type":"enum","label":"Theme","default":"light","options":[
       {"value":"light","label":"Light"},
       {"value":"dark","label":"Dark"}
@@ -37,14 +47,19 @@
         background: var(--bgColor); color: var(--textColor); font-family: var(--sans);
       }
       #root.dark { --bgColor: #0D0E11; --textColor: #F2F3F5; }
+      .background, .background-wash { position: absolute; inset: 0; display: none; }
+      .background { width: 100%; height: 100%; object-fit: var(--backgroundFit, cover); object-position: var(--backgroundPosition, center); }
+      #root.has-bg .background, #root.has-bg .background-wash { display: block; }
+      #root.wash-light .background-wash { background: rgba(246,247,249,.72); }
+      #root.wash-dark .background-wash { background: rgba(13,14,17,.64); }
       #root::before {
         content: ""; position: absolute; inset: 0;
         background-image: linear-gradient(currentColor 1px, transparent 1px),
                           linear-gradient(90deg, currentColor 1px, transparent 1px);
-        background-size: 54px 54px; opacity: 0.05;
+        background-size: 54px 54px; opacity: 0.05; z-index: 1;
       }
       .stage { position: absolute; inset: 0; display: flex; flex-direction: column;
-        justify-content: center; padding: 96px 84px; box-sizing: border-box; }
+        justify-content: center; padding: 96px 84px; box-sizing: border-box; z-index: 2; }
       .kicker { font-weight: 800; font-size: 26px; letter-spacing: 0.16em;
         text-transform: uppercase; color: var(--accentColor); margin-bottom: 20px; }
       .headline { font-family: var(--serif); font-weight: 600; font-size: 92px;
@@ -62,6 +77,8 @@
   <body>
     <div id="root" data-composition-id="starter-poster"
          data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="0">
+      <img class="background" id="background" data-var-src="backgroundImage" alt="" />
+      <div class="background-wash"></div>
       <section class="stage">
         <div class="kicker" id="kicker" data-var-text="kicker">YOUR KICKER</div>
         <h1 class="headline" data-var-text="headline">A headline that earns the scroll</h1>
@@ -72,6 +89,12 @@
     <script>
       const vars = window.__studio?.getVariables?.() ?? {};
       if ((vars.theme || "light") === "dark") document.getElementById("root").classList.add("dark");
+      const root = document.getElementById("root");
+      const bg = String(vars.backgroundImage ?? "").trim();
+      if (bg && !/placeholder/.test(bg)) {
+        root.classList.add("has-bg");
+        if (["light", "dark"].includes(vars.backgroundTreatment)) root.classList.add(`wash-${vars.backgroundTreatment}`);
+      } else document.getElementById("background")?.remove();
       for (const id of ["kicker", "caption", "handle"])
         if (String(vars[id] ?? "").trim() === "") document.getElementById(id).remove();
     </script>

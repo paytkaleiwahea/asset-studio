@@ -14,6 +14,9 @@
   .back { color: var(--mut); font-size: 13px; font-weight: 600; }
   .back:hover { color: var(--text); }
   .cols { display: grid; grid-template-columns: minmax(280px, 400px) 1fr; gap: 30px; align-items: start; margin-top: 18px; }
+  /* Landscape compositions (16:9 video, 1280x720 thumbnails) need a wider column
+     or they preview postage-stamp small. */
+  .cols.wide { grid-template-columns: minmax(320px, 620px) 1fr; }
   @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
   .stagewrap { position: sticky; top: 22px; }
   .frame {
@@ -68,7 +71,7 @@
   <div class="cols">
     <div class="stagewrap">
       <div class="frame" id="frame">
-        <iframe id="pv" sandbox="allow-scripts"></iframe>
+        <iframe id="pv" sandbox="allow-scripts" scrolling="no"></iframe>
         <div class="drop">Drop image to place</div>
       </div>
       <div class="meta" id="meta"></div>
@@ -88,9 +91,22 @@ const $ = (i) => document.getElementById(i);
 let TPL = null, SIZE = null, values = {}, timer = null;
 mountThemeSwitch("themeSwitch");
 
+const draftKey = () => `asset-studio:draft:${ID}`;
+function saveDraft() {
+  try { sessionStorage.setItem(draftKey(), JSON.stringify(values)); } catch { /* storage unavailable */ }
+}
+function loadDraft(defaults) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(draftKey()) || "null");
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) return defaults;
+    return Object.fromEntries(Object.keys(defaults).map((key) => [key, saved[key] ?? defaults[key]]));
+  } catch { return defaults; }
+}
+
 const pv = $("pv"), frame = $("frame");
 function fit() {
   if (!SIZE) return;
+  document.querySelector(".cols")?.classList.toggle("wide", SIZE.w > SIZE.h);
   const s = frame.clientWidth / SIZE.w;
   pv.style.width = SIZE.w + "px"; pv.style.height = SIZE.h + "px";
   pv.style.transform = `scale(${s})`;
@@ -114,6 +130,7 @@ async function uploadTo(varId, file, tag) {
     const r = await fetch(`/api/upload/${ID}`, { method: "POST", body: fd });
     const j = await r.json(); if (!r.ok) throw new Error(j.error || "Upload failed");
     values[varId] = j.path;
+    saveDraft();
     if (tag) tag.textContent = "✓ image set";
     refresh();
   } catch (e) { $("err").textContent = e.message; }
@@ -126,6 +143,7 @@ function buildPanel() {
     const d = document.createElement("div"); d.className = "field";
     d.innerHTML = `<label>Size</label><div class="szrow">${TPL.sizes.map((s) =>
       `<a class="sz ${s.suffix === SUFFIX ? "on" : ""}" href="/editor.html?t=${encodeURIComponent(ID)}&s=${s.suffix}">${s.label}</a>`).join("")}</div>`;
+    d.querySelectorAll("a").forEach((a) => a.addEventListener("click", saveDraft));
     p.appendChild(d);
   }
 
@@ -146,7 +164,7 @@ function buildPanel() {
       input = document.createElement("input"); input.type = "text";
     }
     input.value = values[v.id] ?? "";
-    input.oninput = () => { values[v.id] = input.value; refresh(); };
+    input.oninput = () => { values[v.id] = input.value; saveDraft(); refresh(); };
     d.appendChild(input);
 
     if (v.type === "string" && /image|img|photo|logo|shot/i.test(v.id)) {
@@ -171,7 +189,7 @@ function buildPanel() {
       const c = document.createElement("div"); c.className = "c";
       const l = document.createElement("label"); l.textContent = v.label || v.id;
       const i = document.createElement("input"); i.type = "color"; i.value = values[v.id] || "#000000";
-      i.oninput = () => { values[v.id] = i.value; refresh(); };
+      i.oninput = () => { values[v.id] = i.value; saveDraft(); refresh(); };
       c.append(l, i); row.appendChild(c);
     }
     d.appendChild(row); p.appendChild(d);
@@ -215,7 +233,7 @@ fetch("/api/manifest").then((r) => r.json()).then((data) => {
   if (!TPL) { $("title").textContent = "Template not found"; return; }
   SUFFIX = SUFFIX && TPL.sizes.some((s) => s.suffix === SUFFIX) ? SUFFIX : TPL.sizes[0].suffix;
   SIZE = TPL.sizes.find((s) => s.suffix === SUFFIX);
-  values = Object.fromEntries(TPL.variables.map((v) => [v.id, v.default]));
+  values = loadDraft(Object.fromEntries(TPL.variables.map((v) => [v.id, v.default])));
   $("title").textContent = TPL.label;
   $("sub").textContent = `${TPL.mediaLabel} · ${TPL.categoryLabel}`;
   $("meta").textContent = `${SIZE.w}×${SIZE.h} · exports at ${data.render.scale}×`;

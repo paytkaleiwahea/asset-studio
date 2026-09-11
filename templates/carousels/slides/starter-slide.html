@@ -14,6 +14,16 @@
     {"id":"photoImage","type":"string","label":"Image (optional)","default":"assets/placeholder.svg"},
     {"id":"index","type":"string","label":"Corner index (blank hides)","default":"02 / 06"},
     {"id":"handle","type":"string","label":"Handle (blank hides)","default":"@yourhandle"},
+    {"id":"backgroundImage","type":"string","label":"Background image or gradient (optional)","default":""},
+    {"id":"backgroundFit","type":"enum","label":"Background fit","default":"cover","options":[
+      {"value":"cover","label":"Cover"},{"value":"contain","label":"Contain"},{"value":"fill","label":"Stretch"}
+    ]},
+    {"id":"backgroundPosition","type":"enum","label":"Background position","default":"center","options":[
+      {"value":"center","label":"Center"},{"value":"top","label":"Top"},{"value":"bottom","label":"Bottom"}
+    ]},
+    {"id":"backgroundTreatment","type":"enum","label":"Readability wash","default":"none","options":[
+      {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
+    ]},
     {"id":"theme","type":"enum","label":"Theme","default":"light","options":[
       {"value":"light","label":"Light"},
       {"value":"dark","label":"Dark"}
@@ -37,17 +47,22 @@
         background: var(--bgColor); color: var(--textColor); font-family: var(--sans);
       }
       #root.dark { --bgColor: #0D0E11; --textColor: #F2F3F5; --cardColor: #16181D; }
+      .background, .background-wash { position: absolute; inset: 0; display: none; }
+      .background { width: 100%; height: 100%; object-fit: var(--backgroundFit, cover); object-position: var(--backgroundPosition, center); }
+      #root.has-bg .background, #root.has-bg .background-wash { display: block; }
+      #root.wash-light .background-wash { background: rgba(246,247,249,.72); }
+      #root.wash-dark .background-wash { background: rgba(13,14,17,.64); }
       #root::before {
         content: ""; position: absolute; inset: 0;
         background-image: linear-gradient(currentColor 1px, transparent 1px),
                           linear-gradient(90deg, currentColor 1px, transparent 1px);
-        background-size: 54px 54px; opacity: 0.05;
+        background-size: 54px 54px; opacity: 0.05; z-index: 1;
       }
       .topbar { position: absolute; top: 64px; left: 84px; right: 84px; display: flex;
-        align-items: center; justify-content: space-between; font-weight: 700; font-size: 28px; }
+        align-items: center; justify-content: space-between; font-weight: 700; font-size: 28px; z-index: 2; }
       .topbar .idx { color: var(--accentColor); font-weight: 800; letter-spacing: 0.06em; }
       .stage { position: absolute; inset: 0; display: flex; flex-direction: column;
-        justify-content: center; padding: 150px 84px 96px; box-sizing: border-box; }
+        justify-content: center; padding: 150px 84px 96px; box-sizing: border-box; z-index: 2; }
       .step { font-weight: 900; font-size: 190px; line-height: 0.9; letter-spacing: -0.04em;
         color: var(--accentColor); }
       .step::before { content: ""; display: block; width: 92px; height: 8px; border-radius: 4px;
@@ -71,6 +86,8 @@
   <body>
     <div id="root" data-composition-id="starter-slide"
          data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="0">
+      <img class="background" id="background" data-var-src="backgroundImage" alt="" />
+      <div class="background-wash"></div>
       <div class="topbar">
         <span id="handle" data-var-text="handle">@yourhandle</span>
         <span class="idx" id="index" data-var-text="index">02 / 06</span>
@@ -91,6 +108,11 @@
       // Swap to the image layout only once a real image replaces the placeholder.
       const img = String(vars.photoImage ?? "").trim();
       if (img && !/placeholder/.test(img)) root.classList.add("hasimg");
+      const bg = String(vars.backgroundImage ?? "").trim();
+      if (bg && !/placeholder/.test(bg)) {
+        root.classList.add("has-bg");
+        if (["light", "dark"].includes(vars.backgroundTreatment)) root.classList.add(`wash-${vars.backgroundTreatment}`);
+      } else document.getElementById("background")?.remove();
     </script>
   </body>
 </html>

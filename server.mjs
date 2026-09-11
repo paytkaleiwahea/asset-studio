@@ -242,7 +242,7 @@ app.post("/api/export/video", (req, res) => {
   const rel = `exports/${tpl.name}-${suffix}-${stamp}.${transparent ? "mov" : "mp4"}`;
   const varsFile = path.join(OUT, `vars-${stamp}.json`);
   writeFileSync(varsFile, JSON.stringify(transparent
-    ? { ...variables, bgColor: "transparent", gridOpacity: 0 } : variables));
+    ? { ...variables, backgroundImage: "", backgroundTreatment: "none", bgColor: "transparent", gridOpacity: 0 } : variables));
 
   const args = ["hyperframes", "render", size.dir, "--variables-file", varsFile,
     "--output", rel, "--quality", CONFIG.render.quality, "--quiet"];

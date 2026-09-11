@@ -108,13 +108,13 @@ function renderNav() {
 
 function renderStats() {
   const list = visible();
-  const sizes = new Set(); list.forEach((t) => t.sizes.forEach((s) => sizes.add(s.suffix)));
   const cats = new Set(list.map((t) => t.media + "/" + t.category));
+  const outputSizes = list.reduce((n, t) => n + t.sizes.length, 0);
   const cards = [
     ["Templates", list.length, "in this view"],
     ["Categories", cats.size, "across the library"],
-    ["Output sizes", sizes.size, "per template"],
-    ["Exports", list.length * sizes.size || 0, "one click each"],
+    ["Output sizes", outputSizes, "available combinations"],
+    ["Media types", new Set(list.map((t) => t.media)).size, "in this view"],
   ];
   $("stats").innerHTML = cards.map(([k, v, n]) =>
     `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join("");

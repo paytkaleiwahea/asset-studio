@@ -14,6 +14,16 @@
     {"id":"line1","type":"string","label":"Line 1","default":"Your headline"},
     {"id":"line2","type":"string","label":"Line 2 (blank hides)","default":"lands right here"},
     {"id":"caption","type":"string","label":"Caption (blank hides)","default":"Supporting line"},
+    {"id":"backgroundImage","type":"string","label":"Background image or gradient (optional)","default":""},
+    {"id":"backgroundFit","type":"enum","label":"Background fit","default":"cover","options":[
+      {"value":"cover","label":"Cover"},{"value":"contain","label":"Contain"},{"value":"fill","label":"Stretch"}
+    ]},
+    {"id":"backgroundPosition","type":"enum","label":"Background position","default":"center","options":[
+      {"value":"center","label":"Center"},{"value":"top","label":"Top"},{"value":"bottom","label":"Bottom"}
+    ]},
+    {"id":"backgroundTreatment","type":"enum","label":"Readability wash","default":"none","options":[
+      {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
+    ]},
     {"id":"bgColor","type":"color","label":"Background","default":"#F6F7F9"},
     {"id":"textColor","type":"color","label":"Text","default":"#16181D"},
     {"id":"accentColor","type":"color","label":"Accent","default":"#2453FF"}
@@ -34,15 +44,20 @@
         position: relative; width: {{WIDTH}}px; height: {{HEIGHT}}px; overflow: hidden;
         background: var(--bgColor); color: var(--textColor); font-family: var(--sans);
       }
+      .background, .background-wash { position: absolute; inset: 0; display: none; }
+      .background { width: 100%; height: 100%; object-fit: var(--backgroundFit, cover); object-position: var(--backgroundPosition, center); }
+      #root.has-bg .background, #root.has-bg .background-wash { display: block; }
+      #root.wash-light .background-wash { background: rgba(246,247,249,.72); }
+      #root.wash-dark .background-wash { background: rgba(13,14,17,.64); }
       /* gridOpacity is set to 0 by the transparent export so the grid drops out. */
       #root::before {
         content: ""; position: absolute; inset: 0; opacity: var(--gridOpacity, 1);
         background-image: linear-gradient(rgba(22,24,29,0.05) 1px, transparent 1px),
                           linear-gradient(90deg, rgba(22,24,29,0.05) 1px, transparent 1px);
-        background-size: 54px 54px;
+        background-size: 54px 54px; z-index: 1;
       }
       .stage { position: absolute; inset: 0; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: 26px; padding: 80px; box-sizing: border-box; }
+        align-items: center; justify-content: center; gap: 26px; padding: 80px; box-sizing: border-box; z-index: 2; }
       .line { font-family: var(--serif); font-weight: 600; font-size: 96px; line-height: 1.06;
         letter-spacing: -0.02em; text-align: center; }
       .rule { width: 120px; height: 10px; border-radius: 5px; background: var(--accentColor); }
@@ -55,6 +70,8 @@
   <body>
     <div id="root" data-composition-id="starter-headline"
          data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="4">
+      <img class="background" id="background" data-var-src="backgroundImage" alt="" />
+      <div class="background-wash"></div>
       <section class="stage clip" data-start="0" data-duration="4" data-track-index="1">
         <div class="line" id="l1" data-var-text="line1">Your headline</div>
         <div class="rule" id="rule"></div>
@@ -64,6 +81,12 @@
     </div>
     <script>
       const vars = window.__studio?.getVariables?.() ?? {};
+      const root = document.getElementById("root");
+      const bg = String(vars.backgroundImage ?? "").trim();
+      if (bg && !/placeholder/.test(bg)) {
+        root.classList.add("has-bg");
+        if (["light", "dark"].includes(vars.backgroundTreatment)) root.classList.add(`wash-${vars.backgroundTreatment}`);
+      } else document.getElementById("background")?.remove();
       for (const [id, key] of [["l2", "line2"], ["cap", "caption"]])
         if (String(vars[key] ?? "").trim() === "") document.getElementById(id).remove();
 

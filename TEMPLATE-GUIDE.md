@@ -35,6 +35,11 @@ Types: `string`, `color`, `enum`. This JSON drives the entire editor UI.
 Any variable whose `id` contains **image / img / photo / logo / shot** gets an upload button
 and drag-and-drop for free.
 
+For a reusable full-canvas background, use `backgroundImage` plus enum variables for
+`backgroundFit`, `backgroundPosition`, and an optional readability treatment. Keep the
+background as an `<img>` layer behind the content so user-uploaded photos and exported
+gradient images use the same path. See the three starter templates for the complete pattern.
+
 ### 2. Size tokens
 
 The build stamps these per output size — use them, don't hardcode:
