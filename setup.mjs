@@ -15,6 +15,13 @@ import { stdin as input, stdout as output } from "node:process";
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(ROOT, "studio.config.json");
 const base = JSON.parse(readFileSync(CONFIG_PATH, "utf8"));
+// Keep selectable media independent of the currently enabled navigation.
+const builtins = [
+  { id: 'carousels', label: 'Carousels', icon: 'layers', dir: 'carousels', kind: 'still', blurb: 'Multi-slide decks. Export every slide as a PNG.' },
+  { id: 'statics', label: 'Statics', icon: 'image', dir: 'statics', kind: 'still', blurb: 'Single-frame posters and infographics. Export as PNG.' },
+  { id: 'video', label: 'Video', icon: 'play', dir: 'video', kind: 'motion', blurb: 'Animated overlays. Export as MP4 or transparent MOV.' },
+];
+const mediaCatalog = [...new Map([...builtins, ...(base.mediaCatalog ?? []), ...base.media].map(m => [m.id, m])).values()];
 
 const C = { dim: "\x1b[2m", b: "\x1b[1m", blue: "\x1b[38;5;69m", green: "\x1b[32m", r: "\x1b[0m" };
 const say = (s = "") => console.log(s);
@@ -143,12 +150,12 @@ async function interactive(rl) {
     return a.trim() || def;
   };
 
-  const name = await ask("What's this studio called?", "My Studio");
-  const handle = await ask("Your handle or site (appears on templates)", "@yourhandle");
+  const name = await ask("What's this studio called?", base.brand.name);
+  const handle = await ask("Your handle or site (appears on templates)", base.brand.handle);
 
   say(`\n  ${C.b}Accent color${C.r} ${C.dim}(the one color that brands the UI + templates)${C.r}`);
   PRESET_ACCENTS.forEach(([n, h], i) => say(`   ${i + 1}. ${n} ${C.dim}${h}${C.r}`));
-  let accent = await ask("Pick a number, or paste a #hex", "1");
+  let accent = await ask("Pick a number, or paste a #hex", base.brand.accent);
   const pick = PRESET_ACCENTS[Number(accent) - 1];
   if (pick) accent = pick[1];
   while (!hexOk(accent)) {
@@ -158,10 +165,12 @@ async function interactive(rl) {
 
   say(`\n  ${C.b}What do you make?${C.r} ${C.dim}(these become your top-level nav)${C.r}`);
   const wanted = [];
-  for (const m of base.media) {
-    const yes = (await ask(`Include ${m.label}? (y/n)`, "y")).toLowerCase().startsWith("y");
+  for (const m of mediaCatalog) {
+    const yes = (await ask(`Include ${m.label}? (y/n)`, base.media.some(enabled => enabled.id === m.id) ? 'y' : 'n')).toLowerCase().startsWith("y");
     if (!yes) continue;
-    const defCats = { statics: "posters, quotes, stats", carousels: "slides, covers", video: "overlays, titles" }[m.id] || "general";
+    const mediaDir = path.join(ROOT, 'templates', m.dir);
+    const existingCats = existsSync(mediaDir) ? readdirSync(mediaDir, { withFileTypes: true }).filter(entry => entry.isDirectory() && entry.name !== 'assets').map(entry => entry.name) : [];
+    const defCats = existingCats.join(', ') || ({ statics: "posters, quotes, stats", carousels: "slides, covers", video: "overlays, titles" }[m.id] || "general");
     const cats = await ask(`  Categories for ${m.label} ${C.dim}(comma separated)${C.r}`, defCats);
     wanted.push({
       ...m,
@@ -170,11 +179,12 @@ async function interactive(rl) {
   }
   if (!wanted.length) { say(`\n  You need at least one. Re-run when ready.\n`); process.exit(1); }
 
-  const keep = (await ask("\n  Keep the starter templates as examples? (y/n)", "y")).toLowerCase().startsWith("y");
+  const keep = (await ask("\n  Keep the starter templates as examples? (y/n)", base.hideStarters ? 'n' : 'y')).toLowerCase().startsWith("y");
 
   const cfg = {
     ...base,
-    brand: { ...base.brand, name, handle, accent, accentSoft: lighten(accent) },
+    brand: { ...base.brand, name, handle, accent, accentSoft: accent === base.brand.accent ? base.brand.accentSoft : lighten(accent) },
+    mediaCatalog,
     media: wanted,
   };
   const made = apply(cfg, { seed: true, keepStarters: keep });

@@ -15,6 +15,18 @@ assert(existsSync(path.join(dest,'templates/statics/posters/starter-poster.html'
 r=run('generate.mjs');assert.equal(r.status,0,r.stderr);
 assert(!JSON.parse(readFileSync(path.join(dest,'build/manifest.json'))).templates.some(t=>t.name.startsWith('starter-')));
 const payload={media:[{id:'statics',kind:'still',categories:['new-category']}]};
+const beforeDefaults=JSON.parse(readFileSync(path.join(dest,'studio.config.json')));
+beforeDefaults.brand.accent='#123456'; beforeDefaults.brand.accentSoft='#abcdef';
+writeFileSync(path.join(dest,'studio.config.json'),JSON.stringify(beforeDefaults));
+r=run('setup.mjs','\n');assert.equal(r.status,0,r.stderr);
+const afterDefaults=JSON.parse(readFileSync(path.join(dest,'studio.config.json')));
+assert.deepEqual(afterDefaults.brand,beforeDefaults.brand);
+assert.equal(afterDefaults.hideStarters,true);
+r=run('setup.mjs',['','','','','','','','n',''].join('\n')+'\n');assert.equal(r.status,0,r.stderr);
+assert(!JSON.parse(readFileSync(path.join(dest,'studio.config.json'))).media.some(m=>m.id==='video'));
+r=run('setup.mjs',['','','','','','','','y','',''].join('\n')+'\n');assert.equal(r.status,0,r.stderr);
+assert(JSON.parse(readFileSync(path.join(dest,'studio.config.json'))).media.some(m=>m.id==='video'));
+console.log('PASS Enter preserves brand, accent, accentSoft and hidden starters; excluded Video can be re-enabled');
 r=run('setup.mjs',JSON.stringify(payload)+'\nEND\n');assert.equal(r.status,0,r.stderr);
 const cfg=JSON.parse(readFileSync(path.join(dest,'studio.config.json')));
 assert.equal(cfg.media[0].dir,'statics');assert.equal(cfg.hideStarters,true);

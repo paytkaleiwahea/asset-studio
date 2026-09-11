@@ -100,7 +100,10 @@ app.get("/preview/*rest", (req, res) => {
       Object.keys(V).forEach(function(k){ var v=V[k];
         if(typeof v==="string"||typeof v==="number") root.style.setProperty("--"+k,v);});
       var tl=window.__timelines&&window.__timelines[root.getAttribute("data-composition-id")];
-      if(tl){ tl.repeat(-1); tl.repeatDelay(0.4); tl.play(); }
+      if(tl){
+        if(${req.query.capture === '1'}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), true); }
+        else { tl.repeat(-1); tl.repeatDelay(0.4); tl.play(); }
+      }
     })();</script></body>`);
   res.type("html").send(html);
 });
@@ -124,7 +127,7 @@ async function shoot({ tpl, size, vars = {}, scale, file }) {
   try {
     await page.setViewport({ width: size.w, height: size.h, deviceScaleFactor: scale });
     const url = `http://${PREVIEW_HOST}:${PORT}/preview/${tpl.id}/${size.suffix}?vars=` +
-      encodeURIComponent(JSON.stringify(vars));
+      encodeURIComponent(JSON.stringify(vars)) + '&capture=1';
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluate(() => document.fonts && document.fonts.ready);
     await new Promise((r) => setTimeout(r, 200));
@@ -134,8 +137,8 @@ async function shoot({ tpl, size, vars = {}, scale, file }) {
 }
 
 // ---------- thumbnails (disk cache keyed by content hash) ----------
-const thumbFile = (tpl) => path.join(CACHE, `${tpl.hash}-${tpl.name}.png`);
-const thumbUrl = (tpl) => `/thumbs/${tpl.hash}-${tpl.name}.png`;
+const thumbFile = (tpl) => path.join(CACHE, `still-v2-${tpl.hash}-${tpl.name}.png`);
+const thumbUrl = (tpl) => `/thumbs/still-v2-${tpl.hash}-${tpl.name}.png`;
 
 const inflight = new Map();
 async function ensureThumb(tpl) {

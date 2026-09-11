@@ -1,5 +1,28 @@
 # Asset Studio regression QA
 
+## Follow-up fixes after independent review
+
+- Motion PNGs and thumbnails now pause and seek the timeline to its final pose.
+  Three consecutive wide motion PNG exports were byte-identical (SHA-256
+  `d005bd42ddac469b0f794c5da25f03f26701b4b962159387db98aa7972b917d8`).
+  Inspected the exported image: Line 2 and Caption are both fully revealed.
+  Normal editor previews still loop. The thumbnail cache version was changed
+  so old mid-animation thumbnails are not reused.
+- Setup now defaults to current brand values, preserves an unchanged custom
+  accentSoft value and the current starter visibility, and uses existing category
+  folders as defaults. Extended setup regression passes.
+- The selectable media catalog is separate from enabled media. Excluding Video
+  and then re-enabling it in a later wizard run passes the regression test.
+- The independent review supplied by the user reports passing interactive size
+  switching, reload persistence, and still preview/export parity. Those results
+  are reviewer-reported, not a new browser run by this agent.
+
+Repeat screenshot QA against a running standard studio with
+`node tests/motion-png-regression.mjs`. Set STUDIO_URL for another local port.
+Keep the shipped video starter enabled for this test. It creates three PNGs in
+exports/. Templates with an exit animation intentionally capture their final
+pose as authored, which may be empty.
+
 Tested 2026-09-11 on Windows, Node 24.14.0, HyperFrames 0.8.34,
 FFmpeg/FFprobe 8.1 and Headless Chrome 152.0.7977.30.
 

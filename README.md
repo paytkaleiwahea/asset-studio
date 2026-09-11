@@ -166,6 +166,11 @@ exports/               ← your finished files (gitignored)
 
 ## Agent instructions and saved uploads
 
+Motion PNG exports and thumbnails use the timeline's final pose; the editor
+preview continues playing. Draft edits are stored per browser tab for the current
+session, including reloads and size changes. They are not a saved project shared
+between tabs.
+
 Give your agent [SKILL.md](SKILL.md) and [TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md). Claude Code also reads CLAUDE.md automatically. To register a project skill, copy SKILL.md to `.claude/skills/asset-studio/SKILL.md` (Claude Code) or `.agents/skills/asset-studio/SKILL.md` (Codex). Referenced documents are at the repository root.
 
 Uploaded images live in gitignored `uploads/`. Builds copy them into each output size. Back up this folder with your templates. Rebuilding and cleaning generated files preserve it. Previously deleted uploads must be uploaded again.
