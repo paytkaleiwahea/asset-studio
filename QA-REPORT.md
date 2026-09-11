@@ -1,5 +1,25 @@
 # Asset Studio regression QA
 
+## Brand setup QA
+
+- Browser-tested the first-run invitation, Skip for now, permanent Brand Settings
+  link, live colors/font preview, save, reload persistence, and return to the
+  branded library. Skipping does not remove access to settings.
+- Fixed preview scaling found during visual QA; the complete starter now fits
+  inside the preview panel using CSS container sizing.
+- Verified name, handle, primary/secondary colors, background/text colors, and
+  heading/body fonts. Invalid color input is rejected without changing config.
+- Manifest defaults match the saved brand across all three starters. Inspected
+  a branded PNG and an extracted MP4 frame with Montserrat/Roboto, cream
+  background, dark text, brick primary, and green secondary accents.
+- Brand and repeat-setup regression scripts pass. HyperFrames check passes with
+  no runtime, layout or motion issues; the existing missing stage ID warning
+  remains. No media repository feature was added; ROADMAP.md records the direction.
+
+Run `node tests/brand-regression.mjs` and `node tests/setup-regression.mjs` from
+the repository root. This section supersedes the earlier browser-access limitation
+for the brand workflow only.
+
 ## Follow-up fixes after independent review
 
 - Motion PNGs and thumbnails now pause and seek the timeline to its final pose.

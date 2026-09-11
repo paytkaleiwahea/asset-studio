@@ -90,7 +90,7 @@ would add a second rendering system without improving these templates.
 
 1. **`studio.config.json`** — set your brand name, handle, accent color, and fonts.
    Everything (dashboard, nav, templates) reads from here.
-2. **`templates/`** — delete the starters, add your own. The folder decides the taxonomy:
+2. **`templates/`** — keep the starters for seeding, and add your own. The folder decides the taxonomy:
 
    ```
    templates/<media>/<category>/<name>.html
@@ -174,3 +174,11 @@ between tabs.
 Give your agent [SKILL.md](SKILL.md) and [TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md). Claude Code also reads CLAUDE.md automatically. To register a project skill, copy SKILL.md to `.claude/skills/asset-studio/SKILL.md` (Claude Code) or `.agents/skills/asset-studio/SKILL.md` (Codex). Referenced documents are at the repository root.
 
 Uploaded images live in gitignored `uploads/`. Builds copy them into each output size. Back up this folder with your templates. Rebuilding and cleaning generated files preserve it. Previously deleted uploads must be uploaded again.
+
+## Make it your studio
+
+On first launch, choose **Set up my brand** or **Skip for now**. You can always return through **Brand Settings** in the library or editor. Enter your name, handle, four hex colors, and heading/body fonts. The live starter preview updates before you save. Saving rebuilds brand-connected templates automatically and updates thumbnail cache keys. Existing asset drafts retain their overrides.
+
+Font suggestions use Google Fonts and need internet access. Enter a Google Fonts family name, not a file path. Unknown or unavailable fonts use browser fallbacks; custom font uploads are not included. Background/text colors apply to the starters’ light theme; their dark theme is an explicit alternate palette. The shell keeps its light/dark interface theme and uses the brand accent colors.
+
+The CLI setup and agent interview still use the same studio.config.json. Rebuild after editing the config directly. For the future media-library direction, see [ROADMAP.md](ROADMAP.md).

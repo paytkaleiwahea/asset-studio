@@ -8,6 +8,7 @@
 import {
   readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync, cpSync,
 } from "node:fs";
+import { brandTemplate } from "./brand.mjs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -82,7 +83,9 @@ for (const media of CONFIG.media) {
     for (const file of htmls(cat.dir)) {
       if (CONFIG.hideStarters && ['statics/posters/starter-poster.html', 'carousels/slides/starter-slide.html', 'video/overlays/starter-headline.html'].includes(`${media.dir}/${cat.id}/${file}`)) continue;
       const name = file.replace(/\.html$/, "");
-      const src = readFileSync(path.join(cat.dir, file), "utf8");
+      let src;
+      try { src = brandTemplate(readFileSync(path.join(cat.dir, file), "utf8"), CONFIG.brand); }
+      catch (e) { throw new Error(`${path.join(cat.dir, file)}: ${e.message}. Check the variable declaration and encode apostrophes as &#39;.`); }
       let metadata;
       try { metadata = parseTemplate(src); } catch (e) { throw new Error(`${path.join(cat.dir, file)}: ${e.message}`); }
       const { variables, duration } = metadata;

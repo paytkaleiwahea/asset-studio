@@ -176,3 +176,7 @@ Rules, because frames render out of order:
 - [ ] `npm run build` passes, thumbnail looks right on the dashboard
 
 For JSON in a single-quoted HTML attribute, encode apostrophes as `&#39;` (for example `What&#39;s the headline`). Malformed declarations fail the build with the template path instead of silently removing editor fields.
+
+## Inherit the studio brand
+
+Opt a variable into a brand default with `"brandKey":"accent"`. Supported keys are `handle`, `accent` (primary), `accentSoft` (secondary), `paper` (background), and `ink` (text). Variables without brandKey keep their authored defaults. Add `data-brand-fonts` to the html element and use CSS variables `--serif` and `--sans` to inherit heading and body fonts. The build applies the brand before generating the manifest and hashes, so editor defaults, thumbnails and video renders agree. Individual editor values still override these defaults.

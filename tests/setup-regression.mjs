@@ -4,7 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 const dest=mkdtempSync(path.join(tmpdir(),'asset-studio-setup-'));
-for(const f of ['setup.mjs','generate.mjs','studio.config.json','templates']) cpSync(f,path.join(dest,f),{recursive:true});
+for(const f of ['setup.mjs','brand.mjs','generate.mjs','studio.config.json','templates']) cpSync(f,path.join(dest,f),{recursive:true});
 const run=(file,input)=>spawnSync(process.execPath,[file,...(input?.startsWith('{')?['--paste']:[])],{cwd:dest,input,encoding:'utf8'});
 const initial=readFileSync(path.join(dest,'studio.config.json'),'utf8');
 const base=JSON.parse(initial);

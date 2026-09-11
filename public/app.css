@@ -167,3 +167,6 @@ a { color: inherit; text-decoration: none; }
   text-align: center; color: var(--mut); font-size: 13.5px; line-height: 1.7;
 }
 .empty code { background: var(--panel); padding: 2px 7px; border-radius: 5px; color: var(--text); font-size: 12.5px; }
+
+/* Brand onboarding remains accessible from the library and editor. */
+.brand-action{display:inline-block;border:0;border-radius:9px;padding:12px 18px;background:var(--accent);color:white;font:600 14px Inter,sans-serif;cursor:pointer}.brand-settings-link{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}.brand-invite{max-width:480px;width:calc(100% - 40px);padding:30px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);box-shadow:0 24px 100px #0006}.brand-invite::backdrop{background:#0009}.brand-invite p{line-height:1.6;color:var(--mut)}.brand-invite button{padding:12px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text);cursor:pointer}.brand-invite h2{margin-top:0}

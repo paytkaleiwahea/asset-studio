@@ -110,3 +110,7 @@ folders, it never deletes your templates.
 - **New output size**: add to `sizes.still` or `sizes.motion` in the config.
 
 Choosing not to keep starter examples sets `hideStarters` in the config. Original files remain available for future category seeding; no templates are deleted.
+
+## Browser setup
+
+First launch offers a skippable brand setup. Skipping opens the template library and is remembered in the config. Use Brand Settings from the library or editor anytime to return. Saving applies primary/secondary, background/text, heading/body fonts and the handle to connected starter defaults. CLI setup completion also dismisses the first-run invitation. Browser setup does not change your media categories.

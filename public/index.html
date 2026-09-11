@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/app.css" />
 <script src="/theme.js"></script>
+<script defer src="/brand-ui.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -19,6 +20,7 @@
       <div class="meta"><div class="t" id="wsName">Library</div><div class="s" id="wsCount">—</div></div>
     </div>
     <nav id="nav"></nav>
+    <a class="navitem brand-settings-link" href="/settings.html">⚙ Brand Settings</a>
   </aside>
 
   <main class="main">
@@ -33,7 +35,6 @@
       </div>
     </div>
 
-    <div id="welcome"></div>
 
     <div class="section-t">Quick Insights</div>
     <div class="stats" id="stats"></div>
@@ -173,22 +174,6 @@ function render() {
 const cap = (s) => s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 // Nudge a fresh fork toward setup, until the config is personalised or dismissed.
-function maybeWelcome(data) {
-  const untouched = data.brand.handle === "@yourhandle" || data.brand.name === "Asset Studio";
-  if (!untouched || localStorage.getItem("studio-welcome-dismissed")) return;
-  const el = $("welcome");
-  el.className = "welcome";
-  el.innerHTML = `<div>
-      <div class="t">This is still the default setup</div>
-      <div class="d">Run <code>npm run setup</code> to name it, set your color, and create your categories
-        &mdash; or see <strong>ONBOARDING.md</strong> to have an LLM do it.</div>
-    </div><button class="x" title="Dismiss">&times;</button>`;
-  el.querySelector(".x").onclick = () => {
-    localStorage.setItem("studio-welcome-dismissed", "1");
-    el.remove();
-  };
-}
-
 fetch("/api/manifest").then((r) => r.json()).then((data) => {
   if (data.error) throw new Error(data.error);
   DATA = data;
@@ -200,7 +185,7 @@ fetch("/api/manifest").then((r) => r.json()).then((data) => {
   $("wsName").textContent = data.brand.handle || "Library";
   $("wsCount").textContent = `${data.templates.length} templates`;
   $("builtAt").textContent = "Built " + new Date(data.builtAt).toLocaleString();
-  maybeWelcome(data);
+
   render();
 }).catch((e) => {
   $("grid").innerHTML = `<div class="empty" style="grid-column:1/-1">${e.message}<br><br>

@@ -8,9 +8,10 @@
   Set bgColor to "transparent" (the transparent MOV export does this for you) to
   render an overlay that floats over footage.
 -->
-<html
+<html data-brand-fonts
   lang="en"
   data-composition-variables='[
+{"id":"secondaryColor","brandKey":"accentSoft","type":"color","label":"Secondary","default":"#5C7CFF"},
     {"id":"line1","type":"string","label":"Line 1","default":"Your headline"},
     {"id":"line2","type":"string","label":"Line 2 (blank hides)","default":"lands right here"},
     {"id":"caption","type":"string","label":"Caption (blank hides)","default":"Supporting line"},
@@ -25,9 +26,9 @@
       {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
     ]},
     {"id":"gridOpacity","type":"number","label":"Grid opacity","default":1},
-    {"id":"bgColor","type":"color","label":"Background","default":"#F6F7F9"},
-    {"id":"textColor","type":"color","label":"Text","default":"#16181D"},
-    {"id":"accentColor","type":"color","label":"Accent","default":"#2453FF"}
+    {"id":"bgColor","brandKey":"paper","type":"color","label":"Background","default":"#F6F7F9"},
+    {"id":"textColor","brandKey":"ink","type":"color","label":"Text","default":"#16181D"},
+    {"id":"accentColor","brandKey":"accent","type":"color","label":"Accent","default":"#2453FF"}
   ]'
 >
   <head>
@@ -66,7 +67,8 @@
         color: color-mix(in srgb, var(--textColor) 70%, transparent); }
       html[data-size="half"] .line { font-size: 72px; }
       html[data-size="wide"] .line { font-size: 88px; }
-    </style>
+    .rule { background: linear-gradient(90deg,var(--accentColor),var(--secondaryColor)); }
+</style>
   </head>
   <body>
     <div id="root" data-composition-id="starter-headline"

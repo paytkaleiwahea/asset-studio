@@ -4,13 +4,16 @@
   Copy this file, rename it, and edit. The folder it sits in decides its
   media type (statics) and category (posters). See TEMPLATE-GUIDE.md.
 -->
-<html
+<html data-brand-fonts
   lang="en"
   data-composition-variables='[
+{"id":"secondaryColor","brandKey":"accentSoft","type":"color","label":"Secondary","default":"#5C7CFF"},
+{"id":"brandPaper","brandKey":"paper","type":"color","label":"Background (light theme)","default":"#F6F7F9"},
+{"id":"brandInk","brandKey":"ink","type":"color","label":"Text (light theme)","default":"#16181D"},
     {"id":"kicker","type":"string","label":"Kicker (blank hides)","default":"YOUR KICKER"},
     {"id":"headline","type":"string","label":"Headline","default":"A headline that earns the scroll"},
     {"id":"caption","type":"string","label":"Caption (blank hides)","default":"One supporting line underneath."},
-    {"id":"handle","type":"string","label":"Handle (blank hides)","default":"@yourhandle"},
+    {"id":"handle","brandKey":"handle","type":"string","label":"Handle (blank hides)","default":"@yourhandle"},
     {"id":"backgroundImage","type":"string","label":"Background image or gradient (optional)","default":""},
     {"id":"backgroundFit","type":"enum","label":"Background fit","default":"cover","options":[
       {"value":"cover","label":"Cover"},{"value":"contain","label":"Contain"},{"value":"fill","label":"Stretch"}
@@ -25,7 +28,7 @@
       {"value":"light","label":"Light"},
       {"value":"dark","label":"Dark"}
     ]},
-    {"id":"accentColor","type":"color","label":"Accent","default":"#2453FF"}
+    {"id":"accentColor","brandKey":"accent","type":"color","label":"Accent","default":"#2453FF"}
   ]'
 >
   <head>
@@ -43,7 +46,7 @@
          these class rules and freeze the theme toggle. */
       #root {
         position: relative; width: {{WIDTH}}px; height: {{HEIGHT}}px; overflow: hidden;
-        --bgColor: #F6F7F9; --textColor: #16181D;
+        --bgColor: var(--brandPaper, #F6F7F9); --textColor: var(--brandInk, #16181D);
         background: var(--bgColor); color: var(--textColor); font-family: var(--sans);
       }
       #root.dark { --bgColor: #0D0E11; --textColor: #F2F3F5; }
@@ -72,7 +75,8 @@
       /* Per-ratio tuning. data-size is the size suffix from studio.config.json. */
       html[data-size="sq"] .headline { font-size: 76px; }
       html[data-size="st"] .headline { font-size: 104px; }
-    </style>
+    .kicker { color: var(--secondaryColor); }
+</style>
   </head>
   <body>
     <div id="root" data-composition-id="starter-poster"

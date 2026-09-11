@@ -76,6 +76,7 @@ function apply(cfg, { seed = true, keepStarters = !cfg.hideStarters } = {}) {
     if (!cfg.sizes[m.kind]) throw new Error(`Unknown media kind: ${m.kind}`);
   }
   cfg.hideStarters = !keepStarters;
+  cfg.brandSetup = 'complete';
   writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2) + "\n");
 
   const made = [];

@@ -9,11 +9,12 @@
 import express from "express";
 import multer from "multer";
 import puppeteer from "puppeteer-core";
+import { validateBrand, brandTemplate, parseVariables } from "./brand.mjs";
 import { resolveChrome } from "./chrome.mjs";
 import {
-  readFileSync, existsSync, mkdirSync, writeFileSync, statSync, rmSync,
+  readFileSync, existsSync, mkdirSync, writeFileSync, statSync, rmSync, renameSync,
 } from "node:fs";
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,6 +35,58 @@ mkdirSync(OUT, { recursive: true });
 
 const app = express();
 app.use(express.json({ limit: "4mb" }));
+const configFile = path.join(ROOT, 'studio.config.json');
+const readConfig = () => JSON.parse(readFileSync(configFile, 'utf8'));
+function saveConfig(config) {
+  const temporary = configFile + '.tmp';
+  writeFileSync(temporary, JSON.stringify(config, null, 2) + '\n');
+  renameSync(temporary, configFile);
+}
+app.get('/api/brand', (_req, res) => {
+  const config = readConfig();
+  res.json({ brand: config.brand, setup: config.brandSetup || 'new' });
+});
+app.use('/api/brand', (req, res, next) => {
+  const origin = req.get('origin');
+  if (origin && origin !== `${req.protocol}://${req.get('host')}`) return res.status(403).json({ error: 'Open Brand Settings from this studio.' });
+  next();
+});
+app.post('/api/brand/dismiss', (_req, res) => {
+  const config = readConfig();
+  if (!config.brandSetup) { config.brandSetup = 'skipped'; saveConfig(config); }
+  res.json({ ok: true });
+});
+app.post('/api/brand/preview', (req, res) => {
+  try {
+    const brand = validateBrand(req.body, readConfig().brand);
+    let html = brandTemplate(readFileSync(path.join(ROOT, 'templates/statics/posters/starter-poster.html'), 'utf8'), brand);
+    html = html.replaceAll('{{WIDTH}}', '1080').replaceAll('{{HEIGHT}}', '1350').replaceAll('{{LABEL}}', 'Brand preview');
+    const vars = Object.fromEntries(parseVariables(html).map(variable => [variable.id, variable.default]));
+    vars.headline = 'Make it unmistakably yours';
+    vars.kicker = brand.name;
+    vars.caption = 'Your fonts. Your colors. Ready to create.';
+    res.type('html').send(previewHtml(html, vars, 'templates/statics/posters', true));
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.post('/api/brand', (req, res) => {
+  if (activeRender) return res.status(409).json({ error: 'Wait for the video export to finish, then save your brand.' });
+  const previous = readConfig();
+  let brand;
+  try { brand = validateBrand(req.body, previous.brand); }
+  catch (e) { return res.status(400).json({ error: e.message }); }
+  try {
+    saveConfig({ ...previous, brand, brandSetup: 'complete' });
+    execFileSync(process.execPath, [path.join(ROOT, 'generate.mjs')], { cwd: ROOT, windowsHide: true, timeout: 60000, stdio: 'pipe' });
+    CONFIG.brand = brand;
+    cachedManifest = null;
+    res.json({ brand, setup: 'complete' });
+  } catch (e) {
+    saveConfig(previous);
+    try { execFileSync(process.execPath, [path.join(ROOT, 'generate.mjs')], { cwd: ROOT, windowsHide: true, timeout: 60000, stdio: 'pipe' }); } catch {}
+    cachedManifest = null;
+    res.status(500).json({ error: 'Brand was not saved. Check your templates for build errors and try again.' });
+  }
+});
 
 // ---------- manifest (in-memory, mtime-invalidated) ----------
 let cachedManifest = null;
@@ -82,13 +135,17 @@ app.get("/preview/*rest", (req, res) => {
       if (allowed.has(k) && ["string", "number", "boolean"].includes(typeof val)) vars[k] = val;
     }
   }
+  const html = previewHtml(readFileSync(path.join(ROOT, size.dir, "index.html"), "utf8"), vars, size.dir, req.query.capture === "1");
+  res.type("html").send(html);
+});
+
+function previewHtml(html, vars, baseDir, capture = false) {
   const json = JSON.stringify(vars)
     .replaceAll("<", "\\u003c").replaceAll("\u2028", "\\u2028").replaceAll("\u2029", "\\u2029");
 
-  let html = readFileSync(path.join(ROOT, size.dir, "index.html"), "utf8");
   html = html
     .replace("</head>",
-      `<base href="/${size.dir}/">` +
+      `<base href="/${baseDir}/">` +
       `<script>window.__studio={getVariables:function(){return ${json};}};` +
       `window.__hyperframes=window.__studio;</script></head>`)
     .replace("</body>", `<script>(function(){
@@ -101,12 +158,12 @@ app.get("/preview/*rest", (req, res) => {
         if(typeof v==="string"||typeof v==="number") root.style.setProperty("--"+k,v);});
       var tl=window.__timelines&&window.__timelines[root.getAttribute("data-composition-id")];
       if(tl){
-        if(${req.query.capture === '1'}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), true); }
+        if(${capture}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), true); }
         else { tl.repeat(-1); tl.repeatDelay(0.4); tl.play(); }
       }
     })();</script></body>`);
-  res.type("html").send(html);
-});
+  return html;
+}
 
 // ---------- headless chrome (one shared instance) ----------
 let browserPromise = null;
