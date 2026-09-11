@@ -112,7 +112,7 @@ function renderStats() {
   const outputSizes = list.reduce((n, t) => n + t.sizes.length, 0);
   const cards = [
     ["Templates", list.length, "in this view"],
-    ["Categories", cats.size, "across the library"],
+    ["Categories", cats.size, "in this view"],
     ["Output sizes", outputSizes, "available combinations"],
     ["Media types", new Set(list.map((t) => t.media)).size, "in this view"],
   ];
@@ -135,7 +135,7 @@ function renderGrid() {
   }
   grid.innerHTML = list.map((t) => `
     <div class="card">
-      <div class="thumb"><div class="skel">rendering…</div><img alt="" data-tid="${t.id}" hidden></div>
+      <div class="thumb" style="aspect-ratio:${Number(t.sizes[0].w)}/${Number(t.sizes[0].h)}"><div class="skel">rendering…</div><img alt="" data-tid="${t.id}" hidden></div>
       <div class="body">
         <div class="nm">${t.label}</div>
         <div class="tags">

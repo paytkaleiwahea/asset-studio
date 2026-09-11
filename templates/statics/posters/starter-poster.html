@@ -87,7 +87,7 @@
       </section>
     </div>
     <script>
-      const vars = window.__studio?.getVariables?.() ?? {};
+      const vars = window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.() ?? {};
       if ((vars.theme || "light") === "dark") document.getElementById("root").classList.add("dark");
       const root = document.getElementById("root");
       const bg = String(vars.backgroundImage ?? "").trim();

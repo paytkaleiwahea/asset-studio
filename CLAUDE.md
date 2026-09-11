@@ -53,7 +53,7 @@ Full details in `TEMPLATE-GUIDE.md`. The parts that are easy to forget:
 - Use the stamped `{{WIDTH}}`, `{{HEIGHT}}`, `{{LABEL}}` tokens. Never hardcode
   canvas pixels.
 - Bind with `data-var-text` and `data-var-src`. Read values in script through
-  `window.__studio?.getVariables?.()`.
+  `window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.()`.
 - Any variable id containing image, img, photo, logo, or shot gets an upload
   button for free.
 
@@ -85,6 +85,7 @@ read it, rather than inlining it.
 | Command | What it does |
 |---|---|
 | `npm run setup` | First-run wizard: name, color, categories |
+| `npm run doctor` | Check Chrome launch and video dependencies |
 | `npm run build` | Stamp templates into `build/`, rewrite the manifest |
 | `npm start` | Build, then serve the dashboard on port 4800 |
 | `npm run serve` | Serve without rebuilding |

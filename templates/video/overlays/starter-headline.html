@@ -24,6 +24,7 @@
     {"id":"backgroundTreatment","type":"enum","label":"Readability wash","default":"none","options":[
       {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
     ]},
+    {"id":"gridOpacity","type":"number","label":"Grid opacity","default":1},
     {"id":"bgColor","type":"color","label":"Background","default":"#F6F7F9"},
     {"id":"textColor","type":"color","label":"Text","default":"#16181D"},
     {"id":"accentColor","type":"color","label":"Accent","default":"#2453FF"}
@@ -80,7 +81,7 @@
       </section>
     </div>
     <script>
-      const vars = window.__studio?.getVariables?.() ?? {};
+      const vars = window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.() ?? {};
       const root = document.getElementById("root");
       const bg = String(vars.backgroundImage ?? "").trim();
       if (bg && !/placeholder/.test(bg)) {

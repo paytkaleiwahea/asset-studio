@@ -60,7 +60,15 @@ const STARTERS = {
 };
 
 // ---------- apply a finished config ----------
-function apply(cfg, { seed = true, keepStarters = true } = {}) {
+function apply(cfg, { seed = true, keepStarters = !cfg.hideStarters } = {}) {
+  if (!Array.isArray(cfg.media)) throw new Error('media must be an array');
+  cfg.media = cfg.media.map(m => ({ ...m, dir: m.dir || m.id, label: m.label || m.id }));
+  for (const m of cfg.media) {
+    if (m.categories != null && !Array.isArray(m.categories)) throw new Error('categories must be an array');
+    if (![m.id, m.dir, ...(m.categories ?? [])].every(v => typeof v === 'string' && /^[a-zA-Z0-9_-]+$/.test(v))) throw new Error('Media IDs, directories and categories must be simple folder names');
+    if (!cfg.sizes[m.kind]) throw new Error(`Unknown media kind: ${m.kind}`);
+  }
+  cfg.hideStarters = !keepStarters;
   writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2) + "\n");
 
   const made = [];
@@ -69,10 +77,9 @@ function apply(cfg, { seed = true, keepStarters = true } = {}) {
     mkdirSync(mediaDir, { recursive: true });
     for (const cat of m.categories ?? []) {
       const dir = path.join(mediaDir, cat);
-      const isNew = !existsSync(dir);
       mkdirSync(dir, { recursive: true });
       // Seed an empty category with the matching starter so it renders on day one.
-      if (seed && isNew && !readdirSync(dir).length) {
+      if (seed && !readdirSync(dir).length) {
         const src = path.join(ROOT, STARTERS[m.id] || STARTERS[m.kind === "motion" ? "video" : "statics"] || "");
         if (src && existsSync(src)) {
           copyFileSync(src, path.join(dir, path.basename(src).replace("starter-", "")));
@@ -86,12 +93,7 @@ function apply(cfg, { seed = true, keepStarters = true } = {}) {
   const clean = { ...cfg, media: cfg.media.map(({ categories, ...m }) => m) };
   writeFileSync(CONFIG_PATH, JSON.stringify(clean, null, 2) + "\n");
 
-  if (!keepStarters) {
-    for (const rel of Object.values(STARTERS)) {
-      const p = path.join(ROOT, rel);
-      if (existsSync(p)) rmSync(p);
-    }
-  }
+  // Originals remain available for future category seeding. The build hides them.
   return made;
 }
 

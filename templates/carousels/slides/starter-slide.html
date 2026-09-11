@@ -100,7 +100,7 @@
       </section>
     </div>
     <script>
-      const vars = window.__studio?.getVariables?.() ?? {};
+      const vars = window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.() ?? {};
       const root = document.getElementById("root");
       if ((vars.theme || "light") === "dark") root.classList.add("dark");
       for (const id of ["index", "handle", "body"])

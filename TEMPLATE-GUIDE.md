@@ -77,7 +77,7 @@ Color variables are also exposed as CSS custom properties: `var(--accentColor)`.
 
 ```html
 <script>
-  const vars = window.__studio?.getVariables?.() ?? {};
+  const vars = window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.() ?? {};
 </script>
 ```
 
@@ -174,3 +174,5 @@ Rules, because frames render out of order:
 - [ ] Optional fields blank-hide cleanly
 - [ ] Themed? bg/text are custom properties, **not** declared variables
 - [ ] `npm run build` passes, thumbnail looks right on the dashboard
+
+For JSON in a single-quoted HTML attribute, encode apostrophes as `&#39;` (for example `What&#39;s the headline`). Malformed declarations fail the build with the template path instead of silently removing editor fields.

@@ -108,3 +108,5 @@ folders, it never deletes your templates.
 - **Rebrand**: edit `brand` in `studio.config.json`, then `npm run build`.
 - **New category**: just make the folder. It appears in the nav on the next build.
 - **New output size**: add to `sizes.still` or `sizes.motion` in the config.
+
+Choosing not to keep starter examples sets `hideStarters` in the config. Original files remain available for future category seeding; no templates are deleted.

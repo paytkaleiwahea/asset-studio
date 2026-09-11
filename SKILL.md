@@ -93,7 +93,7 @@ properties on `#root` and `#root.dark`.
 `[data-var-text]` element after your inline script runs. If you split a variable
 into child elements, they get overwritten with the raw string. Omit
 `data-var-text` on those elements and read the value with
-`window.__studio.getVariables()` instead.
+`window.__hyperframes?.getVariables?.() ?? window.__studio?.getVariables?.() ?? {}` instead.
 
 **Invisible SVG.** `document.createElement("path")` makes an inert HTML element
 that never paints. Use `document.createElementNS` with the SVG namespace. And

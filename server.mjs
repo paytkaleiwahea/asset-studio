@@ -9,10 +9,11 @@
 import express from "express";
 import multer from "multer";
 import puppeteer from "puppeteer-core";
+import { resolveChrome } from "./chrome.mjs";
 import {
   readFileSync, existsSync, mkdirSync, writeFileSync, statSync, rmSync,
 } from "node:fs";
-import { spawn, execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +26,8 @@ const CACHE = path.join(ROOT, ".cache");
 const OUT = path.join(ROOT, "exports");
 const PORT = process.env.PORT || CONFIG.server.port;
 const HOST = process.env.HOST || CONFIG.server.host;
+const PREVIEW_HOST = HOST === '0.0.0.0' ? '127.0.0.1' : HOST === '::' ? '[::1]' : HOST.includes(':') && !HOST.startsWith('[') ? `[${HOST}]` : HOST;
+const HF = path.join(ROOT, 'node_modules/hyperframes/bin/hyperframes.mjs');
 
 mkdirSync(CACHE, { recursive: true });
 mkdirSync(OUT, { recursive: true });
@@ -103,27 +106,6 @@ app.get("/preview/*rest", (req, res) => {
 });
 
 // ---------- headless chrome (one shared instance) ----------
-let chromePath = null;
-function resolveChrome() {
-  if (chromePath) return chromePath;
-  if (process.env.CHROME_PATH && existsSync(process.env.CHROME_PATH)) return (chromePath = process.env.CHROME_PATH);
-  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-  try {
-    const out = execFileSync(npx, ["hyperframes", "browser", "path"], {
-      cwd: ROOT, encoding: "utf8", shell: process.platform === "win32", stdio: ["ignore", "pipe", "ignore"],
-    });
-    const line = out.trim().split(/\r?\n/).filter(Boolean).pop();
-    if (line && existsSync(line)) return (chromePath = line);
-  } catch { /* fall through */ }
-  for (const p of [
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser",
-  ]) if (existsSync(p)) return (chromePath = p);
-  throw new Error("No Chrome found. Set CHROME_PATH=/path/to/chrome (see README).");
-}
-
 let browserPromise = null;
 function getBrowser() {
   if (!browserPromise) {
@@ -141,7 +123,7 @@ async function shoot({ tpl, size, vars = {}, scale, file }) {
   const page = await browser.newPage();
   try {
     await page.setViewport({ width: size.w, height: size.h, deviceScaleFactor: scale });
-    const url = `http://${HOST}:${PORT}/preview/${tpl.id}/${size.suffix}?vars=` +
+    const url = `http://${PREVIEW_HOST}:${PORT}/preview/${tpl.id}/${size.suffix}?vars=` +
       encodeURIComponent(JSON.stringify(vars));
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
     await page.evaluate(() => document.fonts && document.fonts.ready);
@@ -206,6 +188,9 @@ app.post("/api/upload/*rest", upload.single("file"), (req, res) => {
   if (!tpl) return res.status(404).json({ error: "Template not found" });
   if (!req.file) return res.status(400).json({ error: "Upload a PNG, JPEG, WebP, GIF, or SVG" });
   const name = randomUUID() + IMAGE_EXT.get(req.file.mimetype);
+  const persistent = path.join(ROOT, 'uploads', tpl.id);
+  mkdirSync(persistent, { recursive: true });
+  writeFileSync(path.join(persistent, name), req.file.buffer);
   // Write into every size so the same relative path resolves at any ratio.
   for (const size of tpl.sizes) {
     const dest = path.join(ROOT, size.dir, "assets");
@@ -248,7 +233,7 @@ app.post("/api/export/video", (req, res) => {
     "--output", rel, "--quality", CONFIG.render.quality, "--quiet"];
   if (transparent) args.push("--format", "mov");
 
-  let child, log = "", settled = false;
+  let child, timer, log = "", settled = false;
   const finish = (code, err) => {
     if (settled) return; settled = true;
     clearTimeout(timer); activeRender = false; rmSync(varsFile, { force: true });
@@ -257,14 +242,14 @@ app.post("/api/export/video", (req, res) => {
     res.status(500).json({ error: log.slice(-1500) || `exit ${code}` });
   };
   try {
-    // npx is a .cmd on Windows; Node >=20 refuses to spawn it without a shell.
-    child = spawn("npx", args, { cwd: ROOT, shell: process.platform === "win32", windowsHide: true });
+    // Invoke the installed CLI through Node so spaces remain literal arguments.
+    child = spawn(process.execPath, [HF, ...args.slice(1)], { cwd: ROOT, windowsHide: true });
   } catch (e) { return finish(null, e); }
   child.stdout.on("data", (d) => { log = (log + d).slice(-20000); });
   child.stderr.on("data", (d) => { log = (log + d).slice(-20000); });
   child.once("error", (e) => finish(null, e));
   child.once("close", (c) => finish(c));
-  const timer = setTimeout(() => { child.kill(); finish(null, new Error("Render timed out after 10 min")); }, 600000);
+  timer = setTimeout(() => { child.kill(); finish(null, new Error("Render timed out after 10 min")); }, 600000);
 });
 
 app.use((err, _req, res, _next) => res.status(400).json({ error: err.message || "Request failed" }));

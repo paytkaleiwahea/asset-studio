@@ -24,8 +24,13 @@ const title = (s) => s.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCa
 /** Pull the declared variable manifest + composition metadata out of a template. */
 function parseTemplate(html) {
   let variables = [];
-  const v = html.match(/data-composition-variables='([\s\S]*?)'/);
-  if (v) { try { variables = JSON.parse(v[1]); } catch { /* malformed: treat as none */ } }
+  const v = html.match(/data-composition-variables\s*=\s*(["'])([\s\S]*?)\1/);
+  if (v) {
+    const decoded = v[2].replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    try { variables = JSON.parse(decoded); }
+    catch (e) { throw new Error(`Invalid data-composition-variables: ${e.message}. Encode apostrophes as &#39; in single-quoted HTML attributes.`); }
+    if (!Array.isArray(variables)) throw new Error('data-composition-variables must be a JSON array');
+  } else if (html.includes('data-composition-variables')) throw new Error('Malformed data-composition-variables attribute');
   const dur = html.match(/data-duration="([\d.]+)"/);
   return { variables, duration: dur ? Number(dur[1]) : 0 };
 }
@@ -41,6 +46,23 @@ function stamp(html, size) {
   return out.replace(/<html(\s|>)/, `<html data-size="${size.suffix}" data-ratio="${size.w}x${size.h}"$1`);
 }
 
+// Preserve uploads from versions that stored them only in generated projects.
+const oldManifest = path.join(BUILD, 'manifest.json');
+if (existsSync(oldManifest)) {
+  for (const tpl of JSON.parse(readFileSync(oldManifest, 'utf8')).templates ?? []) {
+    if (!/^[\w-]+\/[\w-]+\/[\w -]+$/.test(tpl.id)) continue;
+    for (const size of tpl.sizes ?? []) {
+      const source = path.resolve(ROOT, size.dir, 'assets');
+      if (!source.startsWith(BUILD + path.sep) || !existsSync(source)) continue;
+      for (const file of readdirSync(source)) {
+        if (!/^[a-f0-9-]{36}\.(png|jpg|webp|gif|svg)$/.test(file)) continue;
+        const dest = path.join(ROOT, 'uploads', tpl.id);
+        mkdirSync(dest, { recursive: true });
+        cpSync(path.join(source, file), path.join(dest, file), { force: false });
+      }
+    }
+  }
+}
 if (existsSync(BUILD)) rmSync(BUILD, { recursive: true, force: true });
 mkdirSync(BUILD, { recursive: true });
 
@@ -58,9 +80,12 @@ for (const media of CONFIG.media) {
 
   for (const cat of categories) {
     for (const file of htmls(cat.dir)) {
+      if (CONFIG.hideStarters && ['statics/posters/starter-poster.html', 'carousels/slides/starter-slide.html', 'video/overlays/starter-headline.html'].includes(`${media.dir}/${cat.id}/${file}`)) continue;
       const name = file.replace(/\.html$/, "");
       const src = readFileSync(path.join(cat.dir, file), "utf8");
-      const { variables, duration } = parseTemplate(src);
+      let metadata;
+      try { metadata = parseTemplate(src); } catch (e) { throw new Error(`${path.join(cat.dir, file)}: ${e.message}`); }
+      const { variables, duration } = metadata;
       // Content hash keys the thumbnail cache: edit a template, thumb regenerates.
       const hash = createHash("sha1").update(src).digest("hex").slice(0, 12);
 
@@ -73,6 +98,8 @@ for (const media of CONFIG.media) {
         if (existsSync(assets)) cpSync(assets, path.join(abs, "assets"), { recursive: true });
         const shared = path.join(TPL_ROOT, "_shared");
         if (existsSync(shared)) cpSync(shared, path.join(abs, "assets"), { recursive: true, force: false });
+        const uploads = path.join(ROOT, 'uploads', media.id, cat.id, name);
+        if (existsSync(uploads)) cpSync(uploads, path.join(abs, 'assets'), { recursive: true });
         return { ...size, dir };
       });
 

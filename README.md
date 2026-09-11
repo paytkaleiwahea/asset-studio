@@ -108,6 +108,8 @@ would add a second rendering system without improving these templates.
 
 | Command | What it does |
 |---|---|
+| `npm run doctor` | Check Chrome launch and video dependencies |
+| `npm run setup` | Configure your studio and seed categories |
 | `npm run build` | Stamp templates into `build/` + write the manifest |
 | `npm start` | Build, then serve |
 | `npm run serve` | Serve without rebuilding |
@@ -161,3 +163,9 @@ exports/               ← your finished files (gitignored)
 - **[TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md)** — how to author a template. Paste it to an LLM
   and it will write compliant templates for you.
 - **[DEPLOY.md](DEPLOY.md)** — checklist for hosting this on a VPS instead of locally.
+
+## Agent instructions and saved uploads
+
+Give your agent [SKILL.md](SKILL.md) and [TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md). Claude Code also reads CLAUDE.md automatically. To register a project skill, copy SKILL.md to `.claude/skills/asset-studio/SKILL.md` (Claude Code) or `.agents/skills/asset-studio/SKILL.md` (Codex). Referenced documents are at the repository root.
+
+Uploaded images live in gitignored `uploads/`. Builds copy them into each output size. Back up this folder with your templates. Rebuilding and cleaning generated files preserve it. Previously deleted uploads must be uploaded again.

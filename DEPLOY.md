@@ -162,7 +162,9 @@ CMD ["node", "server.mjs"]
 ```
 
 Run with `--shm-size=1g` (Chrome crashes on the default 64 MB) and mount volumes for
-`exports/` and `.cache/`. Put the same auth in front of it.
+`exports/`, `uploads/`, and `.cache/`. Put the same auth in front of it.
+The server binds to `HOST`, but internal screenshot requests use loopback when
+bound to `0.0.0.0` or `::`. The container recipe itself still requires deployment testing.
 
 ---
 
