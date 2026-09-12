@@ -6,6 +6,12 @@ asset. Read TEMPLATE-GUIDE.md before creating or changing a template.
 
 ## Choose the appropriate workflow
 
+- **Import a shared template:** read IMPORTING-TEMPLATES.md. Stage the source
+  outside the library, inspect it, then create a uniquely named local category
+  containing selected templates and their dependencies. Never overlay a downloaded
+  repository onto the checkout or replace local brand configuration. Adapt the
+  local copy; record its source revision. Updates must be compared, not blindly copied.
+
 - **Use an existing template:** inspect the running server's /api/manifest,
   select a real template ID and size suffix, send field overrides to its export
   endpoint, and verify the returned file. Do not create another template merely

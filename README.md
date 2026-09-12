@@ -1,5 +1,9 @@
 # Asset Studio
 
+**Your local creation studio.** Templates from GitHub can be copied into your
+library and adapted to your brand. Sharing templates does not require hosting
+the studio. See [importing and adapting templates](IMPORTING-TEMPLATES.md).
+
 **Current access:** local-first, for agents with access to your checkout and running
 server. A cloud chat cannot automatically reach your computer's `localhost`.
 **Cloud access is planned for a future phase; no release date is set.** Advanced

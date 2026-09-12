@@ -1,5 +1,9 @@
 # Connect an agent to Asset Studio
 
+For templates from another GitHub repository, follow
+[IMPORTING-TEMPLATES.md](IMPORTING-TEMPLATES.md). Import a separate local copy,
+adapt it to this studio's brand, then use the discovery and rendering steps below.
+
 ## What connects to what
 
 Claude Code or Codex uses its terminal and filesystem tools to access the local
