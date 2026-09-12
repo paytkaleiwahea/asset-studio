@@ -1,5 +1,8 @@
 # Deploying to a VPS
 
+Advanced self-hosting guidance, not a tested managed-cloud release. Read
+[CLOUD-ACCESS.md](CLOUD-ACCESS.md) for current limitations and the future phase.
+
 Run this locally first (`npm start`) and confirm exports work. Then host it when you want
 it reachable from anywhere or shared with a team.
 
@@ -46,7 +49,7 @@ cd /srv/studio/app && sudo -u studio npm ci --omit=dev && sudo -u studio npm run
 ```
 
 - [ ] `build/manifest.json` exists
-- [ ] `.cache/`, `build/`, `exports/` are writable by the `studio` user
+- [ ] The app directory is writable by the `studio` user, including configuration saves, staged build directories, `uploads/`, `.cache/`, `build/` and `exports/`
 
 ## 3. Run it as a service
 
@@ -84,6 +87,11 @@ sudo systemctl daemon-reload && sudo systemctl enable --now studio
 
 ## 4. Reverse proxy + TLS
 
+Current gap: Brand Settings compares the browser origin with the backend protocol.
+TLS termination can cause settings requests to return 403. Implement and test
+proxy-aware origin handling with a narrowly trusted proxy; this example alone
+does not resolve it. Preserve origin validation.
+
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
 ```
@@ -120,8 +128,8 @@ sudo certbot --nginx -d studio.yourdomain.com
 Pick one:
 
 - **Basic auth** (fastest): `sudo htpasswd -c /etc/nginx/.htpasswd you`, then in the nginx
-  `location /` block: `auth_basic "Studio"; auth_basic_user_file /etc/nginx/.htpasswd;`
-- **Identity proxy** (best for teams): Cloudflare Access, Tailscale Funnel, or oauth2-proxy
+  `server` block so every location inherits it: `auth_basic "Studio"; auth_basic_user_file /etc/nginx/.htpasswd;`
+- **Identity proxy** (best for teams): Cloudflare Access or oauth2-proxy. A public tunnel alone does not provide authentication
 - **Private network only**: skip public DNS, reach it over Tailscale/WireGuard
 
 Also:
@@ -137,8 +145,8 @@ Also:
       `journalctl -u studio -f` for the warming line
 - [ ] **Prune exports** — they accumulate:
       `find /srv/studio/app/exports -type f -mtime +7 -delete` (daily cron)
-- [ ] **Back up** `templates/` and `studio.config.json`. That's the whole product;
-      `build/`, `.cache/`, and `exports/` are all regenerable.
+- [ ] **Back up** `templates/`, `uploads/` and `studio.config.json`; keep exports until delivered.
+      `build/` and `.cache/` are regenerable; unsaved per-export variables may be needed to reproduce an export.
 - [ ] **Monitor** disk and memory; a runaway Chrome is the usual failure
 
 ---

@@ -8,6 +8,19 @@ Users choose their name, handle, primary and secondary colors, background and
 text colors, and heading and body fonts. Brand-connected templates inherit these
 defaults; per-asset edits remain overrides.
 
+## Future phase: cloud access
+
+Make the studio accessible to remote agents through authenticated hosted access,
+with documented deployment, reliable rendering and downloadable outputs.
+Cloud access is planned, with no release date set. It is not included in this release.
+The intended work includes proxy-aware settings, an agent connection guide,
+deployment QA, and a clear handoff to local editing applications.
+
+Advanced users can already adapt the HTTP server for a private VPS deployment.
+See [CLOUD-ACCESS.md](CLOUD-ACCESS.md) for prerequisites and remaining gaps.
+Hosting the studio does not itself connect Premiere Pro or DaVinci Resolve on
+someone's desktop, and does not automatically install a cloud-agent connector.
+
 ## Future: a reusable media library
 
 Photos, videos, GIFs, logos and graphics could become a separate collection that

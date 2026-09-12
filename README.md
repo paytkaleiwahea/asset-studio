@@ -1,5 +1,11 @@
 # Asset Studio
 
+**Current access:** local-first, for agents with access to your checkout and running
+server. A cloud chat cannot automatically reach your computer's `localhost`.
+**Cloud access is planned for a future phase; no release date is set.** Advanced
+users can self-host on a VPS today, with additional security and integration work.
+See [cloud access and self-hosting](CLOUD-ACCESS.md) for the steps and current gaps.
+
 A local-first, forkable template studio. You author **HTML templates**, it gives you
 a **browser UI** to fill them in and export **branded PNGs and video** — deterministically,
 on your own machine, with no per-asset cost and no design SaaS.
