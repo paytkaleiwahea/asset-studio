@@ -171,7 +171,7 @@ preview continues playing. Draft edits are stored per browser tab for the curren
 session, including reloads and size changes. They are not a saved project shared
 between tabs.
 
-Give your agent [SKILL.md](SKILL.md) and [TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md). Claude Code also reads CLAUDE.md automatically. To register a project skill, copy SKILL.md to `.claude/skills/asset-studio/SKILL.md` (Claude Code) or `.agents/skills/asset-studio/SKILL.md` (Codex). Referenced documents are at the repository root.
+Give your agent [SKILL.md](SKILL.md) and [TEMPLATE-GUIDE.md](TEMPLATE-GUIDE.md). Claude Code reads CLAUDE.md, which points to the shared AGENTS.md instructions. Codex reads AGENTS.md when this checkout is its workspace. To register a project skill, copy SKILL.md to `.claude/skills/asset-studio/SKILL.md` (Claude Code) or `.agents/skills/asset-studio/SKILL.md` (Codex). Referenced documents are at the repository root.
 
 Uploaded images live in gitignored `uploads/`. Builds copy them into each output size. Back up this folder with your templates. Rebuilding and cleaning generated files preserve it. Previously deleted uploads must be uploaded again.
 
@@ -182,3 +182,9 @@ On first launch, choose **Set up my brand** or **Skip for now**. You can always 
 Font suggestions use Google Fonts and need internet access. Enter a Google Fonts family name, not a file path. Unknown or unavailable fonts use browser fallbacks; custom font uploads are not included. Background/text colors apply to the starters’ light theme; their dark theme is an explicit alternate palette. The shell keeps its light/dark interface theme and uses the brand accent colors.
 
 The CLI setup and agent interview still use the same studio.config.json. Rebuild after editing the config directly. For the future media-library direction, see [ROADMAP.md](ROADMAP.md).
+
+## Agent connection
+
+The running local HTTP server is the connection for Claude Code or Codex. With filesystem and terminal access to this checkout, the agent can create templates, build them, inspect the API manifest, populate fields, and render assets. No Asset Studio MCP is bundled. A remote/cloud agent is not automatically connected to your local server.
+
+Read [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) for the executable API example and Premiere/Resolve handoff. For use from another editing project, provide the absolute studio checkout path and its running URL. Exporting fills a template for that output; it does not create a saved editor draft.

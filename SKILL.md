@@ -1,12 +1,12 @@
 ---
 name: asset-studio
-description: Author a branded asset as a reusable template in Asset Studio, then build it into the library so it is editable and exportable from the dashboard. Use whenever someone asks for a poster, carousel slide, static graphic, stat card, quote card, video overlay, thumbnail, or any branded image or motion asset that should be reusable rather than one-off. Also use to add a new category, rebrand the studio, or diagnose a template that is not appearing.
+description: Find, populate and render existing Asset Studio templates through its local API, or create a reusable template when needed. Hand verified exports to separately connected editor tools. Use whenever someone asks for a poster, carousel slide, static graphic, stat card, quote card, video overlay, thumbnail, or any branded image or motion asset that should be reusable rather than one-off. Also use to add a new category, rebrand the studio, or diagnose a template that is not appearing.
 ---
 
 # Asset Studio
 
-Turn an asset request into a permanent, editable template instead of a one-off
-file that disappears into a chat log.
+Use an existing template when it fits. Create a new reusable template when the
+design itself is new.
 
 ## Before anything else
 
@@ -18,7 +18,15 @@ copy of the studio; there is one library and everything goes in it.
 Read `TEMPLATE-GUIDE.md` from that checkout before writing your first template
 in a session. It is the authoring contract and it changes per fork.
 
-## The deliverable
+## Using existing templates
+
+Read AGENT-WORKFLOW.md from the checkout. Connect to the running studio through its local HTTP API, inspect the manifest, pass field values to an export endpoint, and verify the returned local file. The connection requires local terminal/HTTP access; these instructions do not install an MCP or connect a cloud agent to localhost.
+
+For Premiere or Resolve placement, use the separately connected editor tools and verify the timeline result. Do not create another template merely to populate an existing design. Keep render-input JSON with the editing project when it needs to be reused; export calls do not save browser drafts.
+
+The authoring steps below apply only when a new or changed reusable design is needed.
+
+## Creating a new template
 
 A template, not a picture. The difference:
 
