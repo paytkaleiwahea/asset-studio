@@ -158,7 +158,7 @@ function previewHtml(html, vars, baseDir, capture = false) {
         if(typeof v==="string"||typeof v==="number") root.style.setProperty("--"+k,v);});
       var tl=window.__timelines&&window.__timelines[root.getAttribute("data-composition-id")];
       if(tl){
-        if(${capture}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), true); }
+        if(${capture}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), false); }
         else { tl.repeat(-1); tl.repeatDelay(0.4); tl.play(); }
       }
     })();</script></body>`);
@@ -194,8 +194,8 @@ async function shoot({ tpl, size, vars = {}, scale, file }) {
 }
 
 // ---------- thumbnails (disk cache keyed by content hash) ----------
-const thumbFile = (tpl) => path.join(CACHE, `still-v2-${tpl.hash}-${tpl.name}.png`);
-const thumbUrl = (tpl) => `/thumbs/still-v2-${tpl.hash}-${tpl.name}.png`;
+const thumbFile = (tpl) => path.join(CACHE, `still-v3-${tpl.hash}-${tpl.name}.png`);
+const thumbUrl = (tpl) => `/thumbs/still-v3-${tpl.hash}-${tpl.name}.png`;
 
 const inflight = new Map();
 async function ensureThumb(tpl) {
