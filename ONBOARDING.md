@@ -1,5 +1,11 @@
 # Onboarding
 
+**Start with [START-HERE.md](START-HERE.md).** On Windows, double-click
+`Start Asset Studio.bat`; on macOS/Linux, use the launcher instructions there.
+It starts the server and opens the browser. Keep its window open while working.
+Use Brand Settings for colors, searchable Google Fonts and font pairings.
+The command-line workflows below are optional alternatives.
+
 Two ways to set up your fork. Both end with a working, branded studio.
 
 ---

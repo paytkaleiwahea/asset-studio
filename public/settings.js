@@ -25,6 +25,24 @@ async function showPreview() {
 }
 function schedulePreview() { clearTimeout(timer); ++previewVersion; timer=setTimeout(showPreview,350); }
 $('brandForm').addEventListener('input',schedulePreview);
+document.querySelectorAll('[data-heading]').forEach(button => button.addEventListener('click', () => {
+  $('display').value=button.dataset.heading;
+  $('body').value=button.dataset.body;
+  schedulePreview();
+}));
+(async()=>{
+  try {
+    const response=await fetch('/google-fonts.json');
+    if(!response.ok) throw new Error('Catalog unavailable');
+    const catalog=await response.json();
+    const families=catalog.families.filter(name=>typeof name==='string' && /^[a-zA-Z0-9][a-zA-Z0-9 -]{0,79}$/.test(name));
+    if(!families.length) throw new Error('Empty catalog');
+    const options=document.createDocumentFragment();
+    for(const name of families) { const option=document.createElement('option'); option.value=name; options.append(option); }
+    $('fontOptions').replaceChildren(options);
+    $('fontCatalogStatus').textContent=`Search ${families.length.toLocaleString()} Google Fonts families. Catalog snapshot: ${catalog.fetchedAt}.`;
+  }catch { $('fontCatalogStatus').textContent='Starter suggestions are available. Browse Google Fonts or type a family name.'; }
+})();
 $('brandForm').onsubmit = async event => {
   event.preventDefault(); $('save').disabled=true; $('status').textContent='Saving your brand and updating templates…';
   try {

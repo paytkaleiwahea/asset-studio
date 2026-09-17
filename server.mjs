@@ -15,7 +15,7 @@ import {
   readFileSync, existsSync, mkdirSync, writeFileSync, statSync, rmSync, renameSync,
 } from "node:fs";
 import { spawn, execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,6 +34,7 @@ mkdirSync(CACHE, { recursive: true });
 mkdirSync(OUT, { recursive: true });
 
 const app = express();
+app.get('/api/studio', (_req, res) => res.json({ name: 'Asset Studio', identity: createHash('sha256').update(ROOT).digest('hex') }));
 app.use(express.json({ limit: "4mb" }));
 const configFile = path.join(ROOT, 'studio.config.json');
 const readConfig = () => JSON.parse(readFileSync(configFile, 'utf8'));

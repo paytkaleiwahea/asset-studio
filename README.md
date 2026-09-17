@@ -1,5 +1,10 @@
 # Asset Studio
 
+**Downloaded the studio? Start here:** extract the folder and double-click
+**Start Asset Studio.bat** on Windows. The launcher handles the first npm install,
+starts the server and opens your browser. Requires Node.js 22+.
+Keep its window open while working. [Mac/Linux and setup help → START-HERE.md](START-HERE.md)
+
 **Your local creation studio.** Templates from GitHub can be copied into your
 library and adapted to your brand. Sharing templates does not require hosting
 the studio. See [importing and adapting templates](IMPORTING-TEMPLATES.md).
@@ -36,6 +41,12 @@ Same input → same output, every time.
 ---
 
 ## Quick start
+
+For the guided launcher, run `node launch.mjs` from this folder. To reopen the
+studio later, run the launcher again; a saved browser URL does not start the server.
+Brand Settings includes a searchable Google Fonts catalog and suggested pairings.
+Font names are bundled; font loading needs internet. The manual commands below
+remain available.
 
 Requires Node.js 22 or newer. PNG export uses Chrome; video export also requires
 HyperFrames, FFmpeg, and FFprobe.

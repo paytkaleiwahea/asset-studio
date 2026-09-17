@@ -21,10 +21,13 @@
         </section>
         <section><h2>02 · Your colors</h2><p class="hint">Paste a hex code or choose a color.</p><div id="colors" class="color-grid"></div></section>
         <section><h2>03 · Your fonts</h2>
-          <label for="display">Heading font</label><input id="display" name="display" list="fontOptions" required maxlength="80">
-          <label for="body">Body font</label><input id="body" name="body" list="fontOptions" required maxlength="80">
+          <p class="hint" id="fontCatalogStatus">Loading font choices…</p>
+          <label for="display">Heading font</label><input id="display" name="display" list="fontOptions" required maxlength="80" placeholder="Search fonts, e.g. Space Grotesk" autocomplete="off">
+          <label for="body">Body font</label><input id="body" name="body" list="fontOptions" required maxlength="80" placeholder="Search fonts, e.g. Source Sans 3" autocomplete="off">
           <datalist id="fontOptions"><option value="Inter"><option value="Lora"><option value="Roboto"><option value="Montserrat"><option value="Open Sans"><option value="Playfair Display"><option value="Poppins"><option value="DM Sans"></datalist>
-          <p class="hint">Choose a suggestion or enter a Google Fonts family name. Fonts load online; unavailable fonts use a fallback.</p>
+          <p class="hint"><a href="https://fonts.google.com/" target="_blank" rel="noopener noreferrer">Browse Google Fonts ↗</a>, then type a family name above. Clear a field to browse suggestions. Fonts load online; unavailable fonts use a fallback.</p>
+          <p class="hint">Or start with a pairing:</p>
+          <div class="font-pairs"><button type="button" data-heading="Space Grotesk" data-body="DM Sans">Modern</button><button type="button" data-heading="Playfair Display" data-body="Source Sans 3">Editorial</button><button type="button" data-heading="Bebas Neue" data-body="Inter">Bold</button><button type="button" data-heading="Lora" data-body="Inter">Classic</button></div>
         </section>
         <button class="brand-action" id="save" type="submit">Save brand</button>
         <a href="/" class="secondary-link">Back to templates</a>
