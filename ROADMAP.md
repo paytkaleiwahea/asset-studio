@@ -47,4 +47,3 @@ uploads for template backgrounds continue to work.
 - Optional authenticated remote rendering after deployment QA.
 
 These are proposed priorities, not shipped features or promised release dates.
-
