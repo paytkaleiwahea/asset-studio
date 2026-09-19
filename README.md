@@ -225,3 +225,9 @@ playback use saved values. Saved values persist in this browser's local storage;
 unsaved drafts remain per tab. Both are keyed by template, not output size.
 Saving does not modify the source HTML or create a portable project file.
 
+
+Repeated simultaneous requests for the same still preview share one capture.
+The hidden screenshot browser closes after 60 idle seconds and relaunches on demand.
+STUDIO_BROWSER_IDLE_MS can override that timeout (minimum 1000 milliseconds).
+Video exports still use a separate renderer and can overlap screenshot work.
+

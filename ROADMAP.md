@@ -32,3 +32,19 @@ template, using a clear file structure and machine-readable metadata.
 This is a future direction, not a feature in this release. There is no new media
 catalog, ingestion pipeline, GIF browser or video asset manager. Existing image
 uploads for template backgrounds continue to work.
+
+## Proposed v1.1: useful creation and sharing
+
+- Optional generated backgrounds with server-side local API keys and saved local outputs.
+- Portable template packages with required assets, source information and collision-safe imports.
+- Saved-project export/import so browser storage is not the only saved copy.
+
+## Proposed v1.2: larger libraries and remote rendering
+
+- Incremental builds and less asset duplication across output sizes.
+- Cache/export usage display and selective cleanup.
+- Coordinated video and screenshot workloads, cancellation and priority handling.
+- Optional authenticated remote rendering after deployment QA.
+
+These are proposed priorities, not shipped features or promised release dates.
+

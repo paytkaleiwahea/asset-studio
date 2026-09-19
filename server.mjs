@@ -4,7 +4,7 @@
 //   1. manifest.json is read into memory once and re-read only when its mtime changes.
 //   2. Dashboard cards show cached PNG thumbnails (<img>), never live <iframe>s.
 //      Thumbs are keyed by template content hash, so an edit invalidates exactly one file.
-//   3. Thumbs are warmed in the background at boot, so first paint is instant.
+//   3. Thumbs render on demand; optional startup warming is disabled by default.
 //   4. Hashed URLs are served immutable; the browser re-fetches only on a real change.
 import express from "express";
 import multer from "multer";
@@ -167,8 +167,19 @@ function previewHtml(html, vars, baseDir, capture = false) {
 }
 
 // ---------- headless chrome (one shared instance) ----------
-let browserPromise = null;
+let browserPromise = null, browserIdleTimer = null;
+const browserIdleMs = Math.max(1000, Number(process.env.STUDIO_BROWSER_IDLE_MS) || 60000);
+function releaseBrowserLater() {
+  clearTimeout(browserIdleTimer);
+  browserIdleTimer = setTimeout(async () => {
+    const previous = browserPromise;
+    browserPromise = null;
+    if (previous) { try { await (await previous).close(); } catch {} }
+  }, browserIdleMs);
+  browserIdleTimer.unref();
+}
 function getBrowser() {
+  clearTimeout(browserIdleTimer);
   if (!browserPromise) {
     browserPromise = puppeteer.launch({
       executablePath: resolveChrome(), headless: true,
@@ -197,7 +208,7 @@ async function shootNow({ tpl, size, vars = {}, scale, file }) {
     await new Promise((r) => setTimeout(r, 200));
     const el = await page.$("[data-composition-id]");
     await (el || page).screenshot({ path: file, ...(el ? {} : { clip: { x: 0, y: 0, width: size.w, height: size.h } }) });
-  } finally { await page.close().catch(() => {}); }
+  } finally { await page?.close().catch(() => {}); releaseBrowserLater(); }
 }
 
 // ---------- thumbnails (disk cache keyed by content hash) ----------
@@ -267,6 +278,7 @@ app.post("/api/upload/*rest", upload.single("file"), (req, res) => {
   res.json({ path: "assets/" + name });
 });
 
+const previewInflight = new Map();
 // Low-resolution still preview; exports keep their existing settings.
 app.post('/api/preview/still', async (req, res) => {
   const { id, suffix, variables = {} } = req.body || {};
@@ -277,7 +289,14 @@ app.post('/api/preview/still', async (req, res) => {
   const file = path.join(CACHE, 'preview-v1-' + key + '.png');
   try {
     mkdirSync(CACHE, { recursive: true });
-    if (!existsSync(file)) await shoot({ tpl, size, vars: variables, scale: Math.min(1, 640 / Math.max(size.w, size.h)), file });
+    if (!existsSync(file)) {
+      if (!previewInflight.has(key)) {
+        const pending = shoot({ tpl, size, vars: variables, scale: Math.min(1, 640 / Math.max(size.w, size.h)), file })
+          .finally(() => previewInflight.delete(key));
+        previewInflight.set(key, pending);
+      }
+      await previewInflight.get(key);
+    }
     res.json({ url: '/thumbs/' + path.basename(file) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

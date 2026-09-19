@@ -291,7 +291,7 @@ fetch("/api/manifest").then((r) => r.json()).then((data) => {
   SUFFIX = SUFFIX && TPL.sizes.some((s) => s.suffix === SUFFIX) ? SUFFIX : TPL.sizes[0].suffix;
   SIZE = TPL.sizes.find((s) => s.suffix === SUFFIX);
   appliedValues = loadSaved(Object.fromEntries(TPL.variables.map((v) => [v.id, v.default])));
-  values = loadDraft(appliedValues);
+  values = { ...loadDraft(appliedValues) };
   updateSaveStatus();
   $("title").textContent = TPL.label;
   $("sub").textContent = `${TPL.mediaLabel} · ${TPL.categoryLabel}`;
