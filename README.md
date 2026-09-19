@@ -219,3 +219,9 @@ Startup thumbnail warming is off unless STUDIO_WARM_THUMBS=1.
 New field values need a new still capture; cached previews live in .cache/ and
 can be cleared with npm run clean. Live playback still uses the full template.
 
+
+Editor changes are drafts until Save and preview is clicked. Downloads and live
+playback use saved values. Saved values persist in this browser's local storage;
+unsaved drafts remain per tab. Both are keyed by template, not output size.
+Saving does not modify the source HTML or create a portable project file.
+

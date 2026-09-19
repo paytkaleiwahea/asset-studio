@@ -77,6 +77,8 @@
         <div class="drop">Drop image to place</div>
       </div>
       <div class="meta" id="meta"></div>
+      <button class="btn" id="savePreview">Save and preview</button>
+      <div class="meta" id="saveStatus" role="status"></div>
       <button class="btn ghost" id="playPreview">Play live preview</button>
       <div class="meta">Lightweight still preview by default. Exports retain full quality.</div>
       <button class="btn" id="png">Download PNG</button>
@@ -92,13 +94,34 @@
 const qs = new URLSearchParams(location.search);
 const ID = qs.get("t"); let SUFFIX = qs.get("s");
 const $ = (i) => document.getElementById(i);
-let TPL = null, SIZE = null, values = {}, timer = null;
+let TPL = null, SIZE = null, values = {}, appliedValues = {}, timer = null;
 mountThemeSwitch("themeSwitch");
 
 const draftKey = () => `asset-studio:draft:${ID}`;
 function saveDraft() {
+  updateSaveStatus();
   try { sessionStorage.setItem(draftKey(), JSON.stringify(values)); } catch { /* storage unavailable */ }
 }
+const savedKey = () => 'asset-studio:saved:' + ID;
+function updateSaveStatus() {
+  const dirty = JSON.stringify(values) !== JSON.stringify(appliedValues);
+  $('saveStatus').textContent = dirty ? 'Unsaved changes. Save to update preview and downloads.' : 'Preview and downloads use saved values.';
+}
+function loadSaved(defaults) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(savedKey()) || 'null');
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return defaults;
+    return Object.fromEntries(Object.keys(defaults).map(key => [key, saved[key] ?? defaults[key]]));
+  } catch { return defaults; }
+}
+$('savePreview').onclick = () => {
+  try {
+    localStorage.setItem(savedKey(), JSON.stringify(values));
+    appliedValues = { ...values };
+    saveDraft(); stopPreview(); refresh();
+    $('err').textContent = '';
+  } catch { $('err').textContent = 'Could not save in this browser. Check available browser storage.'; }
+};
 function loadDraft(defaults) {
   try {
     const saved = JSON.parse(sessionStorage.getItem(draftKey()) || "null");
@@ -141,13 +164,13 @@ function refresh() {
     if (document.hidden) return;
     if (livePreview) {
       $('stillPreview').hidden = true; pv.hidden = false;
-      pv.src = '/preview/' + ID + '/' + SUFFIX + '?vars=' + encodeURIComponent(JSON.stringify(values));
+      pv.src = '/preview/' + ID + '/' + SUFFIX + '?vars=' + encodeURIComponent(JSON.stringify(appliedValues));
       return;
     }
     try {
       const response = await fetch('/api/preview/still', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: values })
+        body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: appliedValues })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Preview failed');
@@ -167,7 +190,6 @@ async function uploadTo(varId, file, tag) {
     values[varId] = j.path;
     saveDraft();
     if (tag) tag.textContent = "✓ image set";
-    refresh();
   } catch (e) { $("err").textContent = e.message; }
 }
 
@@ -199,7 +221,7 @@ function buildPanel() {
       input = document.createElement("input"); input.type = "text";
     }
     input.value = values[v.id] ?? "";
-    input.oninput = () => { values[v.id] = input.value; saveDraft(); refresh(); };
+    input.oninput = () => { values[v.id] = input.value; saveDraft(); };
     d.appendChild(input);
 
     if (v.type === "string" && /image|img|photo|logo|shot/i.test(v.id)) {
@@ -224,7 +246,7 @@ function buildPanel() {
       const c = document.createElement("div"); c.className = "c";
       const l = document.createElement("label"); l.textContent = v.label || v.id;
       const i = document.createElement("input"); i.type = "color"; i.value = values[v.id] || "#000000";
-      i.oninput = () => { values[v.id] = i.value; saveDraft(); refresh(); };
+      i.oninput = () => { values[v.id] = i.value; saveDraft(); };
       c.append(l, i); row.appendChild(c);
     }
     d.appendChild(row); p.appendChild(d);
@@ -237,7 +259,7 @@ async function exportAs(btnId, label, endpoint, extra) {
   try {
     const r = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: values, ...extra }),
+      body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: appliedValues, ...extra }),
     });
     const j = await r.json(); if (!r.ok) throw new Error(j.error || "Export failed");
     const a = document.createElement("a"); a.href = j.url; a.download = "";
@@ -268,7 +290,9 @@ fetch("/api/manifest").then((r) => r.json()).then((data) => {
   if (!TPL) { $("title").textContent = "Template not found"; return; }
   SUFFIX = SUFFIX && TPL.sizes.some((s) => s.suffix === SUFFIX) ? SUFFIX : TPL.sizes[0].suffix;
   SIZE = TPL.sizes.find((s) => s.suffix === SUFFIX);
-  values = loadDraft(Object.fromEntries(TPL.variables.map((v) => [v.id, v.default])));
+  appliedValues = loadSaved(Object.fromEntries(TPL.variables.map((v) => [v.id, v.default])));
+  values = loadDraft(appliedValues);
+  updateSaveStatus();
   $("title").textContent = TPL.label;
   $("sub").textContent = `${TPL.mediaLabel} · ${TPL.categoryLabel}`;
   $("meta").textContent = `${SIZE.w}×${SIZE.h} · exports at ${data.render.scale}×`;
