@@ -179,7 +179,13 @@ function getBrowser() {
 }
 
 /** Screenshot one built size to a PNG file. scale may be fractional (thumbnails). */
-async function shoot({ tpl, size, vars = {}, scale, file }) {
+let screenshotQueue = Promise.resolve();
+function shoot(options) {
+  const job = screenshotQueue.then(() => shootNow(options));
+  screenshotQueue = job.catch(() => {});
+  return job;
+}
+async function shootNow({ tpl, size, vars = {}, scale, file }) {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
@@ -261,6 +267,21 @@ app.post("/api/upload/*rest", upload.single("file"), (req, res) => {
   res.json({ path: "assets/" + name });
 });
 
+// Low-resolution still preview; exports keep their existing settings.
+app.post('/api/preview/still', async (req, res) => {
+  const { id, suffix, variables = {} } = req.body || {};
+  const tpl = findTemplate(id), size = findSize(tpl, suffix);
+  if (!size) return res.status(404).json({ error: 'Template not found' });
+  if (!variables || typeof variables !== 'object' || Array.isArray(variables)) return res.status(400).json({ error: 'Invalid variables' });
+  const key = createHash('sha256').update(JSON.stringify([tpl.hash, id, suffix, variables])).digest('hex');
+  const file = path.join(CACHE, 'preview-v1-' + key + '.png');
+  try {
+    mkdirSync(CACHE, { recursive: true });
+    if (!existsSync(file)) await shoot({ tpl, size, vars: variables, scale: Math.min(1, 640 / Math.max(size.w, size.h)), file });
+    res.json({ url: '/thumbs/' + path.basename(file) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ---------- export: PNG ----------
 app.post("/api/export/png", async (req, res) => {
   const { id, suffix, variables = {}, scale } = req.body || {};
@@ -319,5 +340,5 @@ app.listen(PORT, HOST, async () => {
   let n = 0; try { n = manifest().templates.length; } catch { /* not built yet */ }
   console.log(`\n  ${CONFIG.brand.name} → http://${HOST}:${PORT}`);
   console.log(`  ${n} template(s) loaded${n ? "" : "  (run: npm run build)"}\n`);
-  await warmThumbs();
+  if (process.env.STUDIO_WARM_THUMBS === "1") await warmThumbs();
 });

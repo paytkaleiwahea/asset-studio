@@ -209,3 +209,13 @@ The CLI setup and agent interview still use the same studio.config.json. Rebuild
 The running local HTTP server is the connection for Claude Code or Codex. With filesystem and terminal access to this checkout, the agent can create templates, build them, inspect the API manifest, populate fields, and render assets. No Asset Studio MCP is bundled. A remote/cloud agent is not automatically connected to your local server.
 
 Read [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) for the executable API example and Premiere/Resolve handoff. For use from another editing project, provide the absolute studio checkout path and its running URL. Exporting fills a template for that output; it does not create a saved editor draft.
+
+## Lightweight editor preview
+
+The editor defaults to a cached still with a maximum 640-pixel longest edge.
+Use Play live preview for interactive HTML playback; switching tabs stops it.
+PNG and video export settings are unchanged. Screenshots are serialized.
+Startup thumbnail warming is off unless STUDIO_WARM_THUMBS=1.
+New field values need a new still capture; cached previews live in .cache/ and
+can be cleared with npm run clean. Live playback still uses the full template.
+

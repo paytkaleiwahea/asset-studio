@@ -72,10 +72,13 @@
   <div class="cols">
     <div class="stagewrap">
       <div class="frame" id="frame">
-        <iframe id="pv" sandbox="allow-scripts" scrolling="no"></iframe>
+        <img id="stillPreview" alt="Template preview" style="width:100%;height:100%;object-fit:contain" />
+        <iframe hidden id="pv" sandbox="allow-scripts" scrolling="no"></iframe>
         <div class="drop">Drop image to place</div>
       </div>
       <div class="meta" id="meta"></div>
+      <button class="btn ghost" id="playPreview">Play live preview</button>
+      <div class="meta">Lightweight still preview by default. Exports retain full quality.</div>
       <button class="btn" id="png">Download PNG</button>
       <button class="btn ghost" id="mp4" hidden>Download video (MP4)</button>
       <button class="btn ghost" id="mov" hidden>Download transparent (MOV)</button>
@@ -115,11 +118,42 @@ function fit() {
 }
 addEventListener("resize", fit);
 
+let livePreview = false, previewRevision = 0;
+function stopPreview() {
+  livePreview = false;
+  pv.src = 'about:blank'; pv.hidden = true;
+  $('stillPreview').hidden = false;
+  $('playPreview').textContent = 'Play live preview';
+}
+$('playPreview').onclick = () => {
+  if (livePreview) { stopPreview(); refresh(); }
+  else { livePreview = true; $('playPreview').textContent = 'Stop live preview'; refresh(); }
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { ++previewRevision; clearTimeout(timer); stopPreview(); }
+  else refresh();
+});
+addEventListener('pagehide', () => { ++previewRevision; clearTimeout(timer); stopPreview(); });
 function refresh() {
   clearTimeout(timer);
-  timer = setTimeout(() => {
-    pv.src = `/preview/${ID}/${SUFFIX}?vars=` + encodeURIComponent(JSON.stringify(values));
-  }, 280);
+  const revision = ++previewRevision;
+  timer = setTimeout(async () => {
+    if (document.hidden) return;
+    if (livePreview) {
+      $('stillPreview').hidden = true; pv.hidden = false;
+      pv.src = '/preview/' + ID + '/' + SUFFIX + '?vars=' + encodeURIComponent(JSON.stringify(values));
+      return;
+    }
+    try {
+      const response = await fetch('/api/preview/still', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ID, suffix: SUFFIX, variables: values })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Preview failed');
+      if (revision === previewRevision && !livePreview && !document.hidden) $('stillPreview').src = result.url;
+    } catch (error) { if (revision === previewRevision) $('err').textContent = error.message; }
+  }, 650);
 }
 
 const imageVars = () => TPL.variables.filter((v) => v.type === "string" && /image|img|photo|logo|shot/i.test(v.id));
