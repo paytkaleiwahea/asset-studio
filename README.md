@@ -1,5 +1,7 @@
 # Asset Studio
 
+Read the [practical user guide](USER-GUIDE.md) for the full create, save, export and share workflow.
+
 **Downloaded the studio? Start here:** extract the folder and double-click
 **Start Asset Studio.bat** on Windows. The launcher handles the first npm install,
 starts the server and opens your browser. Requires Node.js 22+.

@@ -1,5 +1,7 @@
 # Open your Asset Studio
 
+Read the [practical user guide](USER-GUIDE.md) for the full create, save, export and share workflow.
+
 1. Extract the entire download into a folder. Keep your studio in that folder.
 2. Install Node.js 22 or newer from https://nodejs.org if it is not installed.
 3. On Windows, double-click **Start Asset Studio.bat**. On macOS, open Terminal
