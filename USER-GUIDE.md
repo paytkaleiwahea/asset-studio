@@ -62,11 +62,41 @@ writer or bulk slide exporter. Create and export slides one at a time, or ask an
 agent to plan the sequence and export each slide with its own values. Keep a
 numbered set of outputs such as `01-cover.png`, `02-problem.png`, `03-example.png`.
 
-The motion starter lasts four seconds. Duration is authored in the template,
-not currently a general editor control. Ask the agent to adjust the composition,
-scene and animation timing together when changing duration. The preview loops;
-the exported file has a finite duration. The server's ten-minute timeout limits
-rendering time, not the length of the finished video.
+**The motion starter defaults to four seconds. That is not a maximum.** You can
+ask your agent to adapt a template for a different length, such as an eight-second
+callout or a fifteen-second explainer. Those are examples of requested durations,
+not a guarantee that every design fits them without adjustment.
+
+Duration is authored in the template, not currently a general editor control.
+Simply requesting a longer export does not override an unchanged template. Ask
+the agent to adjust the composition, scene and animation timing together, rebuild,
+and verify the actual exported duration. Preserve the original template when you
+want to keep both versions. The preview loops; the export has a finite duration.
+The server's ten-minute timeout limits processing time, not finished video length.
+Longer or more complex renders require more resources; a maximum supported video
+length has not been established by testing.
+
+### Best practice: include timing in your brief
+
+Tell the agent how long you want the asset to be before it creates or adapts it.
+Also describe how the time should be used:
+
+- **Total length:** specify seconds, or a start/end time in your edit.
+- **Entrance:** how quickly the graphic should become readable.
+- **Hold:** how long the complete message stays visible; allow time to read it.
+- **Exit or loop:** say whether it should animate out, hold until the end, or loop.
+- **Placement:** explain whether it overlays speech or is a standalone sequence.
+
+For example:
+
+> Adapt this lower third to last eight seconds: animate in for half a second,
+> hold fully readable for seven seconds, then animate out for half a second.
+> Export a transparent MOV. Keep the original four-second version and verify
+> the new file's duration, readability and ending.
+
+When the right length is unclear, ask the agent to suggest timing based on the
+copy and intended use. Review the whole exported clip, including its last frame;
+stretching an entrance animation is usually different from extending the hold.
 
 Transparent export clears the background in supported templates. Custom templates
 must implement that behavior too; inspect the actual alpha before relying on it.
@@ -81,15 +111,18 @@ output size, brand references and desired duration for motion.
 
 > Read AGENTS.md and AGENT-WORKFLOW.md. Find a suitable existing template for
 > [purpose]. Use [copy], export at [size], and verify the file. Do not create a
-> new template just to change the wording. Save the render input JSON alongside
+> new template just to change the wording. For motion, I need [duration] seconds
+> with [entrance / hold / exit timing]; check whether the source timing needs to
+> change before exporting. Save the render input JSON alongside
 > the output so I can reproduce it later.
 
 **Create a reusable design**
 
 > Read TEMPLATE-GUIDE.md. Create a new [quote card / lower third / statistic card]
 > using my current brand. Make the content editable, preserve existing templates,
-> and test the supported sizes. For motion, use [duration] seconds and verify a
-> rendered frame. Give me the template ID and resulting file paths.
+> and test the supported sizes. For motion, use [duration] seconds, with
+> [entrance / readable hold / exit or loop behavior]. Verify the exported duration
+> and inspect the animation and ending. Give me the template ID and file paths.
 
 **Make a carousel**
 
