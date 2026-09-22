@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/app.css" />
 <script src="/theme.js"></script>
+<script src="/editor-controls.js"></script>
 <script defer src="/brand-ui.js"></script>
 <style>
   .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 30px 70px; }
@@ -116,6 +117,7 @@ function loadSaved(defaults) {
 }
 $('savePreview').onclick = () => {
   try {
+    if (!StudioControls.validate($('panel'))) return;
     localStorage.setItem(savedKey(), JSON.stringify(values));
     appliedValues = { ...values };
     saveDraft(); stopPreview(); refresh();
@@ -179,7 +181,7 @@ function refresh() {
   }, 650);
 }
 
-const imageVars = () => TPL.variables.filter((v) => v.type === "string" && /image|img|photo|logo|shot/i.test(v.id));
+const imageVars = () => TPL.variables.filter((v) => v.type === "string" && !v.multiline && /image|img|photo|logo|shot/i.test(v.id));
 
 async function uploadTo(varId, file, tag) {
   try {
@@ -204,53 +206,8 @@ function buildPanel() {
     p.appendChild(d);
   }
 
-  const colors = TPL.variables.filter((v) => v.type === "color");
-  for (const v of TPL.variables.filter((v) => v.type !== "color")) {
-    const d = document.createElement("div"); d.className = "field";
-    const lab = document.createElement("label"); lab.textContent = v.label || v.id; d.appendChild(lab);
+  StudioControls.mount(p, TPL.variables, values, () => saveDraft(), uploadTo, SIZE);
 
-    let input;
-    if (v.type === "enum") {
-      input = document.createElement("select");
-      for (const o of v.options || []) {
-        const op = document.createElement("option"); op.value = o.value; op.textContent = o.label; input.appendChild(op);
-      }
-    } else if (/\n/.test(String(v.default ?? "")) || String(v.default ?? "").length > 46) {
-      input = document.createElement("textarea");
-    } else {
-      input = document.createElement("input"); input.type = "text";
-    }
-    input.value = values[v.id] ?? "";
-    input.oninput = () => { values[v.id] = input.value; saveDraft(); };
-    d.appendChild(input);
-
-    if (v.type === "string" && /image|img|photo|logo|shot/i.test(v.id)) {
-      const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "8px";
-      const tag = document.createElement("span"); tag.className = "setimg";
-      tag.textContent = values[v.id] && !/placeholder/.test(values[v.id]) ? "✓ image set" : "";
-      const up = document.createElement("label"); up.className = "upl";
-      up.innerHTML = `Upload image<input type="file" accept="image/*" hidden>`;
-      up.querySelector("input").onchange = (e) => {
-        const f = e.target.files[0]; if (f) uploadTo(v.id, f, tag);
-      };
-      row.append(up, tag); d.appendChild(row);
-    }
-    p.appendChild(d);
-  }
-
-  if (colors.length) {
-    const d = document.createElement("div"); d.className = "field";
-    d.innerHTML = `<label>Colors</label>`;
-    const row = document.createElement("div"); row.className = "colors";
-    for (const v of colors) {
-      const c = document.createElement("div"); c.className = "c";
-      const l = document.createElement("label"); l.textContent = v.label || v.id;
-      const i = document.createElement("input"); i.type = "color"; i.value = values[v.id] || "#000000";
-      i.oninput = () => { values[v.id] = i.value; saveDraft(); };
-      c.append(l, i); row.appendChild(c);
-    }
-    d.appendChild(row); p.appendChild(d);
-  }
 }
 
 async function exportAs(btnId, label, endpoint, extra) {

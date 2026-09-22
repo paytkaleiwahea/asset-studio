@@ -7,6 +7,7 @@
 //   3. Thumbs render on demand; optional startup warming is disabled by default.
 //   4. Hashed URLs are served immutable; the browser re-fetches only on a real change.
 import express from "express";
+import { stampTiming } from "./template-timing.mjs";
 import multer from "multer";
 import puppeteer from "puppeteer-core";
 import { validateBrand, brandTemplate, parseVariables } from "./brand.mjs";
@@ -141,6 +142,7 @@ app.get("/preview/*rest", (req, res) => {
 });
 
 function previewHtml(html, vars, baseDir, capture = false) {
+  html = stampTiming(html, vars);
   const json = JSON.stringify(vars)
     .replaceAll("<", "\\u003c").replaceAll("\u2028", "\\u2028").replaceAll("\u2029", "\\u2029");
 
@@ -159,7 +161,7 @@ function previewHtml(html, vars, baseDir, capture = false) {
         if(typeof v==="string"||typeof v==="number") root.style.setProperty("--"+k,v);});
       var tl=window.__timelines&&window.__timelines[root.getAttribute("data-composition-id")];
       if(tl){
-        if(${capture}) { tl.repeat(0); tl.pause(); tl.seek(tl.duration(), false); }
+        if(${capture}) { tl.repeat(0); tl.pause(); tl.seek(Number(root.dataset.posterTime) || tl.duration(), false); }
         else { tl.repeat(-1); tl.repeatDelay(0.4); tl.play(); }
       }
     })();</script></body>`);
@@ -322,22 +324,28 @@ app.post("/api/export/video", (req, res) => {
   const tpl = findTemplate(id); const size = findSize(tpl, suffix);
   if (!size) return res.status(404).json({ error: "Template not found" });
   if (activeRender) return res.status(429).json({ error: "A render is already running." });
+  let renderHtml;
+  const merged = { ...Object.fromEntries((tpl.variables || []).map(v => [v.id, v.default])), ...variables };
+  try { renderHtml = stampTiming(readFileSync(path.join(ROOT, size.dir, 'index.html'), 'utf8'), merged); }
+  catch (error) { return res.status(400).json({ error: error.message }); }
   activeRender = true;
 
   const stamp = randomUUID().slice(0, 8);
   const rel = `exports/${tpl.name}-${suffix}-${stamp}.${transparent ? "mov" : "mp4"}`;
+  const compositionFile = path.join(ROOT, size.dir, `render-${stamp}.html`);
+  writeFileSync(compositionFile, renderHtml);
   const varsFile = path.join(OUT, `vars-${stamp}.json`);
   writeFileSync(varsFile, JSON.stringify(transparent
     ? { ...variables, backgroundImage: "", backgroundTreatment: "none", bgColor: "transparent", gridOpacity: 0 } : variables));
 
   const args = ["hyperframes", "render", size.dir, "--variables-file", varsFile,
-    "--output", rel, "--quality", CONFIG.render.quality, "--quiet"];
+    "--composition", `render-${stamp}.html`, "--output", rel, "--quality", CONFIG.render.quality, "--quiet"];
   if (transparent) args.push("--format", "mov");
 
   let child, timer, log = "", settled = false;
   const finish = (code, err) => {
     if (settled) return; settled = true;
-    clearTimeout(timer); activeRender = false; rmSync(varsFile, { force: true });
+    clearTimeout(timer); activeRender = false; rmSync(varsFile, { force: true }); rmSync(compositionFile, { force: true });
     if (err) return res.status(500).json({ error: `${err.message}\n\nVideo export needs hyperframes + ffmpeg (see README).` });
     if (code === 0 && existsSync(path.join(ROOT, rel))) return res.json({ url: "/" + rel });
     res.status(500).json({ error: log.slice(-1500) || `exit ${code}` });

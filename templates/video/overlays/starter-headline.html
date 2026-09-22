@@ -10,26 +10,7 @@
 -->
 <html data-brand-fonts
   lang="en"
-  data-composition-variables='[
-{"id":"secondaryColor","brandKey":"accentSoft","type":"color","label":"Secondary","default":"#5C7CFF"},
-    {"id":"line1","type":"string","label":"Line 1","default":"Your headline"},
-    {"id":"line2","type":"string","label":"Line 2 (blank hides)","default":"lands right here"},
-    {"id":"caption","type":"string","label":"Caption (blank hides)","default":"Supporting line"},
-    {"id":"backgroundImage","type":"string","label":"Background image or gradient (optional)","default":""},
-    {"id":"backgroundFit","type":"enum","label":"Background fit","default":"cover","options":[
-      {"value":"cover","label":"Cover"},{"value":"contain","label":"Contain"},{"value":"fill","label":"Stretch"}
-    ]},
-    {"id":"backgroundPosition","type":"enum","label":"Background position","default":"center","options":[
-      {"value":"center","label":"Center"},{"value":"top","label":"Top"},{"value":"bottom","label":"Bottom"}
-    ]},
-    {"id":"backgroundTreatment","type":"enum","label":"Readability wash","default":"none","options":[
-      {"value":"none","label":"None"},{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}
-    ]},
-    {"id":"gridOpacity","type":"number","label":"Grid opacity","default":1},
-    {"id":"bgColor","brandKey":"paper","type":"color","label":"Background","default":"#F6F7F9"},
-    {"id":"textColor","brandKey":"ink","type":"color","label":"Text","default":"#16181D"},
-    {"id":"accentColor","brandKey":"accent","type":"color","label":"Accent","default":"#2453FF"}
-  ]'
+  data-composition-variables='[{"id": "secondaryColor", "brandKey": "accentSoft", "type": "color", "label": "Secondary", "default": "#5C7CFF"}, {"id": "line1", "type": "string", "label": "Line 1", "default": "Your headline"}, {"id": "line2", "type": "string", "label": "Line 2 (blank hides)", "default": "lands right here"}, {"id": "caption", "type": "string", "label": "Caption (blank hides)", "default": "Supporting line"}, {"id": "backgroundImage", "type": "string", "label": "Background image or gradient (optional)", "default": ""}, {"id": "backgroundFit", "type": "enum", "label": "Background fit", "default": "cover", "options": [{"value": "cover", "label": "Cover"}, {"value": "contain", "label": "Contain"}, {"value": "fill", "label": "Stretch"}]}, {"id": "backgroundPosition", "type": "enum", "label": "Background position", "default": "center", "options": [{"value": "center", "label": "Center"}, {"value": "top", "label": "Top"}, {"value": "bottom", "label": "Bottom"}]}, {"id": "backgroundTreatment", "type": "enum", "label": "Readability wash", "default": "none", "options": [{"value": "none", "label": "None"}, {"value": "light", "label": "Light"}, {"value": "dark", "label": "Dark"}]}, {"id": "gridOpacity", "type": "number", "label": "Grid opacity", "default": 1, "min": 0, "max": 1, "step": 0.1, "group": "Background"}, {"id": "bgColor", "brandKey": "paper", "type": "color", "label": "Background", "default": "#F6F7F9"}, {"id": "textColor", "brandKey": "ink", "type": "color", "label": "Text", "default": "#16181D"}, {"id": "accentColor", "brandKey": "accent", "type": "color", "label": "Accent", "default": "#2453FF"}, {"id": "durationSeconds", "type": "number", "group": "Timing", "label": "Total seconds", "default": 4, "min": 2, "max": 120, "step": 0.5}, {"id": "entranceSeconds", "type": "number", "group": "Timing", "label": "Entrance seconds", "default": 1.5, "min": 0.2, "max": 10, "step": 0.1}, {"id": "exitSeconds", "type": "number", "group": "Timing", "label": "Exit seconds (0 holds the last frame)", "default": 0, "min": 0, "max": 10, "step": 0.1}, {"id": "headingFont", "type": "font", "group": "Brand", "label": "Heading font", "default": "", "description": "Inherit brand, or choose an installed system font."}]'
 >
   <head>
     <meta charset="UTF-8" />
@@ -71,11 +52,11 @@
 </style>
   </head>
   <body>
-    <div id="root" data-composition-id="starter-headline"
-         data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="4">
+    <div id="root" data-composition-id="starter-headline" data-start="0"
+         data-width="{{WIDTH}}" data-height="{{HEIGHT}}" data-duration="4" data-duration-var="durationSeconds">
       <img class="background" id="background" data-var-src="backgroundImage" alt="" />
       <div class="background-wash"></div>
-      <section class="stage clip" data-start="0" data-duration="4" data-track-index="1">
+      <section id="headline-stage" class="stage clip" data-start="0" data-duration="4" data-duration-var="durationSeconds" data-track-index="1">
         <div class="line" id="l1" data-var-text="line1">Your headline</div>
         <div class="rule" id="rule"></div>
         <div class="line" id="l2" data-var-text="line2">lands right here</div>
@@ -93,6 +74,11 @@
       for (const [id, key] of [["l2", "line2"], ["cap", "caption"]])
         if (String(vars[key] ?? "").trim() === "") document.getElementById(id).remove();
 
+      const total = Math.max(2, Math.min(120, Number(vars.durationSeconds) || 4));
+      const enter = Math.min(total * .45, Math.max(.2, Number(vars.entranceSeconds) || 1.5));
+      const exit = Math.min(total * .45, Math.max(0, Number(vars.exitSeconds) || 0));
+      if (vars.headingFont) root.style.setProperty('--serif', vars.headingFont);
+      root.dataset.posterTime = String(total - exit - .05);
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
       tl.from("#l1", { y: 50, opacity: 0, duration: 0.55, ease: "power3.out" }, 0.15)
@@ -101,6 +87,11 @@
         tl.from("#l2", { y: 50, opacity: 0, duration: 0.55, ease: "power3.out" }, 0.7);
       if (document.getElementById("cap"))
         tl.from("#cap", { y: 26, opacity: 0, duration: 0.5, ease: "power3.out" }, 1.05);
+      // Scale the entrance, then hold. Exit animates the parent, avoiding tween conflicts.
+      const original = tl.duration();
+      tl.getChildren().forEach(tween => { tween.startTime(tween.startTime() * enter / original); tween.duration(tween.duration() * enter / original); });
+      if (exit) tl.to('.stage', { opacity: 0, duration: exit, ease: 'none' }, total - exit);
+      tl.to({}, { duration: .001 }, total - .001);
       window.__timelines["starter-headline"] = tl;
     </script>
   </body>

@@ -180,3 +180,13 @@ For JSON in a single-quoted HTML attribute, encode apostrophes as `&#39;` (for e
 ## Inherit the studio brand
 
 Opt a variable into a brand default with `"brandKey":"accent"`. Supported keys are `handle`, `accent` (primary), `accentSoft` (secondary), `paper` (background), and `ink` (text). Variables without brandKey keep their authored defaults. Add `data-brand-fonts` to the html element and use CSS variables `--serif` and `--sans` to inherit heading and body fonts. The build applies the brand before generating the manifest and hashes, so editor defaults, thumbnails and video renders agree. Individual editor values still override these defaults.
+
+## Grouped and typed controls
+
+Variables may specify `group` and `description`. Supported editor types now include `number` (`min`, `max`, `step`), `boolean`, and `font`, alongside string/color/enum. Font values are CSS font-family names, not downloadable font files. Set `multiline: true` for lists: these render as textareas and do not receive an image upload button even when their ID contains `image`.
+
+Keep changes draft-only; Save and preview applies them. The editor validates numeric fields before saving. Templates should also bound values read from HTTP/agent overrides.
+
+For opt-in configurable video length, declare a number variable `durationSeconds` with min 2 and max 120. Put `data-duration-var="durationSeconds"` on the root and clips whose `data-duration` must track it. Asset Studio stamps these attributes before parsing/rendering, in a temporary composition next to the original (so relative asset paths work). Never rewrite the shared source during export. Build the seek-safe timeline using the same value. Set `root.dataset.posterTime` to a readable timestamp when the timeline includes an exit fade. See starter-headline.html.
+
+Case-study galleries accept newline-separated relative image paths and resize the grid by count. The three bundled SVG examples are original project artwork. There is no dependency on Toolcraft or Diffusion Studio and no third-party source was copied for this implementation.

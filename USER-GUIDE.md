@@ -227,3 +227,15 @@ or private client assets.
 
 **First useful result:** brand one starter, save it, export a PNG and place it in
 an actual post or editing project. Expand the library after that workflow works.
+
+## Design controls and reusable backgrounds
+
+The editor groups fields into Content, Brand, Background, Layout, and Timing when a template provides them. Number fields enforce their stated bounds; checkboxes control optional sections. Font selectors offer system fonts or the inherited brand font. Installing a font or configuring its URL remains necessary when using a custom font.
+
+On any single background-image field, open **Create a reusable background**, choose Gradient, Halo, or Grid and two colors, then click **Create background**. This writes a local SVG through the normal upload system. Click **Save and preview** to apply it. No AI subscription, external generation request, or continuous animation is involved. Upload your own generated artwork the same way. Include the referenced file when sharing a template; local uploads are not automatically published to GitHub.
+
+The new **Case Studies / Case Study** templates appear under both Carousels and Statics. Supply one headline, story, metric list (`label|value`, one per line), and up to six image paths. Choose Overview, Results, or Gallery to create related slides using the same brief. Export each layout separately; this is not an automatic deck exporter. The bundled artwork is original SVG and the sample metrics are fictional. Replace them with verified results before publishing.
+
+The **Starter Headline** now exposes total duration (2-120 seconds), entrance and exit timing. Its four-second default is not a video-engine limit. Entrance and exit are each capped at 45% of the total so there is always a readable hold. Zero exit keeps the final frame visible. Still exports capture the readable pose before the exit. Other templates retain their authored timing unless they opt into timing controls; longer durations can still be authored in their source.
+
+**Save visual style** stores the current template's colors and font selections in this browser. **Apply saved style** restores matching fields to the draft, including brand-key colors across compatible templates. Click Save and preview afterward. This preset does not overwrite studio.config.json or travel with a GitHub download.

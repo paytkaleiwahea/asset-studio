@@ -7,7 +7,7 @@ const start=script.indexOf('const draftKey');
 const end=script.indexOf('const pv =');
 const elements={}; const saved=new Map(), drafts=new Map();
 const storage=m=>({getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v)});
-const context=vm.createContext({localStorage:storage(saved),sessionStorage:storage(drafts),$:id=>elements[id]??=( {} ),ID:'video/overlays/demo',values:{headline:'Original'},appliedValues:{headline:'Original'},renders:0,stopPreview(){},refresh(){context.renders++}});
+const context=vm.createContext({StudioControls:{validate:()=>true},localStorage:storage(saved),sessionStorage:storage(drafts),$:id=>elements[id]??=( {} ),ID:'video/overlays/demo',values:{headline:'Original'},appliedValues:{headline:'Original'},renders:0,stopPreview(){},refresh(){context.renders++}});
 vm.runInContext(script.slice(start,end),context);
 vm.runInContext(script.match(/values = \{ \.\.\.loadDraft\(appliedValues\) \};/)[0],context);
 context.values.headline='Draft'; vm.runInContext('saveDraft()',context);
