@@ -13,14 +13,16 @@ try {
  await page.waitForSelector('#var-headline');await page.waitForFunction(()=>document.querySelector('#stillPreview').naturalWidth>0);
  assert.equal(await page.$eval('#var-showSummary',e=>e.type),'checkbox');
  await page.evaluate(()=>[...document.querySelectorAll('button')].find(e=>e.textContent==='Save visual style').click());
+ const sizesBefore=await page.$$eval('.sz',links=>links.map(link=>link.href));
  const originalColor=await page.$eval('#var-accentColor',e=>e.value);
  await page.$eval('#var-accentColor',e=>{e.value='#ff0000';e.dispatchEvent(new Event('input',{bubbles:true}))});
  await page.evaluate(()=>[...document.querySelectorAll('button')].find(e=>e.textContent==='Apply saved style').click());
  assert.equal(await page.$eval('#var-accentColor',e=>e.value),originalColor);
+ assert.deepEqual(await page.$$eval('.sz',links=>links.map(link=>link.href)),sizesBefore,'Applying a style preserves size navigation');
  const before=renders;await page.type('#var-headline',' QA');
  await new Promise(r=>setTimeout(r,1000));assert.equal(renders,before,'Typing must not render');
  await page.click('#savePreview');await new Promise(r=>setTimeout(r,1600));assert.equal(renders,before+1);
- await page.goto(base+'/editor.html?t=carousels/case-studies/case-study&s=sq');await page.waitForSelector('#var-headline');
+ await Promise.all([page.waitForNavigation(),page.click('.sz[href$="s=sq"]')]);await page.waitForSelector('#var-headline');
  assert.match(await page.$eval('#var-headline',e=>e.value),/ QA$/);
  await page.click('details summary');
  await page.evaluate(()=>[...document.querySelectorAll('button')].find(e=>e.textContent==='Create background').click());

@@ -170,3 +170,78 @@ a { color: inherit; text-decoration: none; }
 
 /* Brand onboarding remains accessible from the library and editor. */
 .brand-action{display:inline-block;border:0;border-radius:9px;padding:12px 18px;background:var(--accent);color:white;font:600 14px Inter,sans-serif;cursor:pointer}.brand-settings-link{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}.brand-invite{max-width:480px;width:calc(100% - 40px);padding:30px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);box-shadow:0 24px 100px #0006}.brand-invite::backdrop{background:#0009}.brand-invite p{line-height:1.6;color:var(--mut)}.brand-invite button{padding:12px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text);cursor:pointer}.brand-invite h2{margin-top:0}
+
+/* ---------- control rail ----------
+   Compact panel/field primitives shared by the editor and any future control
+   surface. Density over slab: a label and its live value sit on one row, help
+   text is small and muted, and colors group into a swatch grid instead of one
+   full-width row each. Everything reads --accent, so forks stay config-driven. */
+.rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.rail-panel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 16px; min-width: 0;
+}
+:root[data-theme="light"] .rail-panel { background: var(--panel); }
+.rail-panel > h2 {
+  font: 700 10.5px/1 Inter, sans-serif; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--mut); margin: 0 0 14px;
+}
+.rail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.fld { margin-bottom: 14px; min-width: 0; }
+.fld:last-child { margin-bottom: 0; }
+.fld > label {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font: 600 12px Inter, sans-serif; color: var(--mut);
+  margin-bottom: 6px; letter-spacing: 0; text-transform: none;
+}
+.fld > label > span { flex: 1 1 auto; min-width: 0; }
+.fld input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; display: block; }
+.fld .num {
+  width: 78px; flex: 0 0 auto; text-align: right; padding: 5px 8px;
+  font: 600 11.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+}
+:root[data-theme="light"] .fld .num { background: var(--bg); }
+.fld .switch { flex: 0 0 auto; width: 17px; height: 17px; accent-color: var(--accent); margin: 0; cursor: pointer; }
+.note { font-size: 11.5px; line-height: 1.45; color: var(--mut); margin: 6px 0 0; }
+.note:empty { display: none; }
+
+.swatchgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 10px 12px; align-items: end; }
+.swatch { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.swatch > span {
+  font: 700 9.5px Inter, sans-serif; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--mut); line-height: 1.3;
+}
+.swatch input[type=color] {
+  width: 100%; height: 30px; padding: 2px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+}
+:root[data-theme="light"] .swatch input[type=color] { background: var(--bg); }
+
+.btn-sm {
+  padding: 8px 14px; border-radius: 7px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--text);
+  font: 600 12.5px Inter, sans-serif; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+:root[data-theme="light"] .btn-sm:not(.accent) { background: var(--bg); }
+.btn-sm:hover { border-color: var(--accent); }
+.btn-sm:disabled { opacity: .55; cursor: default; }
+.btn-sm.accent { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.btn-sm.accent:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+
+.rail :is(input[type=text], textarea, select) {
+  width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+  color: var(--text); padding: 9px 11px; font: 400 13px Inter, sans-serif;
+}
+:root[data-theme="light"] .rail :is(input[type=text], textarea, select) { background: var(--bg); }
+.rail textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+.rail :is(input, select, textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+.rail input[type=file] { font-size: 11.5px; color: var(--mut); max-width: 100%; margin-top: 8px; }
+.rail details { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.rail summary { font: 600 12px Inter, sans-serif; color: var(--mut); cursor: pointer; }
+.rail summary:hover { color: var(--text); }
+.rail details > :not(summary) { margin-top: 8px; }
