@@ -200,7 +200,10 @@ function buildPanel() {
     p.appendChild(d);
   }
 
-  StudioControls.mount(p, TPL.variables, values, () => saveDraft(), uploadTo, SIZE);
+  const controls = document.createElement("div");
+  controls.className = "rail"; controls.id = "templateControls";
+  p.appendChild(controls);
+  StudioControls.mount(controls, TPL.variables, values, () => saveDraft(), uploadTo, SIZE);
 
 }
 
